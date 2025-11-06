@@ -157,11 +157,11 @@ The Conductor agent follows a strict four-stage cycle for every development task
 ### 2. Implementation Phase (repeated per plan phase)
 - **Delegates Implementation** - `Conductor` invokes the `implement-subagent` with the specific phase objective and requirements.
 - **TDD Execution** - `implement-subagent` follows strict Test-Driven Development:
-    1. Writes failing tests first.
-    2. Run tests to confirm they fail.
-    3. Writes minimal code to make the tests pass.
-    4. Run tests to verify they pass.
-    5. Apply linting and formatting.
+    - Writes failing tests first.
+    - Run tests to confirm they fail.
+    - Writes minimal code to make the tests pass.
+    - Run tests to verify they pass.
+    - Apply linting and formatting.
 - **Phase Summary** - `implement-subagent` reports completion back to `Conductor`.
 
 ### 3. Review Phase (repeated per plan phase)
