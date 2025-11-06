@@ -11,7 +11,7 @@ The system solves a critical challenge in AI-assisted development: maintaining c
 ## Key Features
 
 - **🎭 Multi-Agent Workflow** - Conductor agent orchestrates specialized Planning, Implementation, and Code Review subagents, each optimized for their specific role.
-- **✅ TDD Enforcement** - Strict Test Driven Development: write failing tests, seeing them fail, writing minimal code to pass, and verifying success before proceeding.
+- **✅ TDD Enforcement** - Strict Test Driven Development: writing failing tests, seeing them fail, writing minimal code to pass, and verifying success before proceeding.
 - **🔍 Quality Gates** - Automated code review after each phase ensures standards are met before moving forward.
 - **📋 Documentation Trail** - Comprehensive plan files and phase completion records create an audit trail for reviewing all work completed.
 - **⏸️ Mandatory Pause Points** - Built-in stops for plan approval and phase commits keep you in control of the development process.
