@@ -64,3 +64,6 @@ web_modules/
 
 # npm pack output
 *.tgz
+
+package.json
+package-lock.json
