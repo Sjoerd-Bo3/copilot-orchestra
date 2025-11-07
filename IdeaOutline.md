@@ -5,27 +5,70 @@
 The **Copilot Orchestra** consists of two distinct orchestrators that work together but remain separate:
 - **Planning Orchestrator** - Manages requirements, documentation, and project planning
 - **Execution Orchestrator** - Handles implementation, code generation, and deployment
-Actor:
-- **Human Developer** - Provides input, makes decisions, and reviews outputs at key interaction points
+- **Human Developer** - Initiates all actions via GitHub Copilot Chat prompts
 
-Both orchestrators communicate via GitHub and Azure DevOps but maintain separate responsibilities and agent pools.
+Both orchestrators are **prompt-driven** and communicate via GitHub and Azure DevOps while maintaining separate responsibilities and agent pools.
+
+---
+
+# 💬 Prompt-Driven Architecture
+
+## Developer as Prompter
+
+The developer initiates and controls everything through **GitHub Copilot Chat**:
+
+```markdown
+Examples of developer prompts:
+- "Create a new feature for user authentication"
+- "Plan the next sprint based on current backlog"
+- "Generate implementation for TSK-001"
+- "Review the code in the current PR"
+- "Deploy to staging environment"
+- "Show me the current sprint status"
+```
+
+## Prompt Flow
+
+```mermaid
+graph TB
+    D[👤 Developer]
+    C[GitHub Copilot Chat]
+    P[Planning Orchestrator]
+    E[Execution Orchestrator]
+    G[GitHub/DevOps]
+    
+    D -->|Prompt| C
+    C -->|Interprets| C
+    C -->|Routes to| P
+    C -->|Routes to| E
+    
+    P -->|Response| C
+    E -->|Response| C
+    C -->|Display| D
+    
+    D -->|Decision Prompt| C
+    C -->|Execute| P
+    C -->|Execute| E
+    
+    P -.->|Background Sync| G
+    E -.->|Background Sync| G
+```
 
 ---
 
 # 👤 Human Interaction Points
 
-## Developer Touchpoints
+## Copilot Chat Commands
 
-| Orchestrator | Interaction Type | When | Tools |
-|--------------|-----------------|------|-------|
-| **Planning** | Idea Input | Project start, feature requests | Markdown files, GitHub Issues |
-| **Planning** | Requirement Review | Before sprint planning | PR reviews, Comments |
-| **Planning** | Sprint Approval | Sprint planning | GitHub/DevOps approval |
-| **Execution** | Code Review | After implementation | GitHub PR review |
-| **Execution** | Test Validation | After test runs | Test reports review |
-| **Execution** | Deployment Approval | Before production | Manual gates |
-| **Both** | Status Monitoring | Daily | Dashboards, reports |
-| **Both** | Decision Points | When blocked | Comments, issues |
+| Command Type | Example Prompt | Orchestrator | Response |
+|--------------|----------------|--------------|----------|
+| **Planning** | `@planning create user story for login feature` | Planning | Generates user story, asks for approval |
+| **Sprint** | `@planning start new sprint` | Planning | Shows proposed sprint, asks for confirmation |
+| **Implement** | `@execution implement TSK-001` | Execution | Generates code, shows in chat |
+| **Review** | `@execution review current changes` | Execution | Shows review comments |
+| **Deploy** | `@execution deploy to staging` | Execution | Asks for confirmation, then deploys |
+| **Status** | `@orchestra show sprint progress` | Both | Shows dashboard in chat |
+| **Decision** | `approve` / `reject` / `modify` | Current context | Executes decision |
 
 ---
 
@@ -33,30 +76,29 @@ Both orchestrators communicate via GitHub and Azure DevOps but maintain separate
 
 ## Purpose
 
-The **Planning Orchestrator** is responsible for:
-* Gathering and structuring requirements in Markdown
-* Creating project plans and roadmaps
-* Managing sprints and dependencies
-* Synchronizing documentation with GitHub/Azure DevOps
-* Maintaining the single source of truth in Markdown format
-* **🔵 Interfacing with developers for requirement clarification**
+The **Planning Orchestrator** responds to planning-related prompts:
+* Converting prompts into structured requirements
+* Creating project plans from chat conversations
+* Managing sprints through chat commands
+* Generating documentation from discussions
+* Maintaining project state in Markdown
 
 ## Architecture
 
 ### Planning Agents
 
-| Agent | Purpose | Output | Human Interaction |
-|-------|---------|--------|-------------------|
-| **PlanAgent** | Converts ideas and notes into structured project plans | `plans/*.md` | ✅ Reviews generated plans |
-| **RequirementsAgent** | Manages and structures requirements, detects duplicates | `requirements/*.md` | ✅ Validates requirements |
-| **SprintAgent** | Plans sprints, manages sprint cycles and retrospectives | `sprints/sprint-YYYY-MM.md` | ✅ Approves sprint goals |
-| **DocAgent** | Maintains documentation, changelogs, and release notes | `changelogs/*.md`, `docs/*.md` | ✅ Reviews documentation |
-| **GitAgent** | Version control, commits, branches, tags | Git operations | ❌ Automated |
-| **DevOpsAgent** | Creates User Stories, Features, Epics with acceptance criteria | Azure DevOps work items | ✅ Assigns story points |
-| **SyncAgent** | Bidirectional sync between GitHub ↔ Azure DevOps | Synchronized data | ❌ Automated |
-| **DependencyAgent** | Analyzes dependencies and critical paths (DAG) | `dependencies.md` | ✅ Validates dependencies |
+| Agent | Triggered By | Chat Response | Follow-up Prompts |
+|-------|--------------|---------------|-------------------|
+| **PlanAgent** | `create plan for [feature]` | Shows generated plan | `approve`, `modify`, `add details` |
+| **RequirementsAgent** | `define requirements for [feature]` | Lists requirements | `add acceptance criteria`, `prioritize` |
+| **SprintAgent** | `plan sprint`, `close sprint` | Sprint overview | `add task`, `remove task`, `start sprint` |
+| **DocAgent** | `generate docs`, `update readme` | Shows documentation | `approve`, `edit section`, `regenerate` |
+| **GitAgent** | Automatic on approval | Commit confirmation | N/A - automated |
+| **DevOpsAgent** | `create work items` | Shows created items | `assign to [user]`, `set priority` |
+| **SyncAgent** | Background process | Sync status | N/A - automated |
+| **DependencyAgent** | `analyze dependencies` | Dependency graph | `resolve conflict`, `reorder tasks` |
 
-### Folder Structure
+### Folder Structure (Generated from prompts)
 
 ```
 /planning/
@@ -71,36 +113,24 @@ The **Planning Orchestrator** is responsible for:
 │   ├── sync.agent.md
 │   └── dependency.agent.md
 │
-├── templates/
-│   ├── requirement_template.md
-│   ├── sprint_template.md
-│   ├── feature_template.md
-│   ├── epic_template.md
-│   └── user_story_template.md
+├── templates/           # Used by agents when responding to prompts
+│   └── [templates]
 │
-├── input/                    # 👤 Human input folder
-│   ├── ideas/               # Raw ideas from developers
-│   ├── feedback/            # Sprint retrospectives
-│   └── requirements/        # Business requirements
-│
-└── output/
-    ├── requirements/
-    ├── plans/
-    ├── sprints/
-    ├── roadmap/
-    └── dependencies/
+└── output/             # Auto-generated from chat sessions
+    ├── requirements/   # Created when developer prompts for requirements
+    ├── plans/         # Created when developer prompts for plans
+    ├── sprints/       # Created when developer starts sprints
+    └── dependencies/  # Created when analyzing dependencies
 ```
 
-## Planning Workflow with Human Interaction
+## Planning Workflow via Prompts
 
-1. **👤 Developer Input** → Writes ideas/requirements in `/input/`
-2. **Requirement Gathering** → PlanAgent & RequirementsAgent process input
-3. **👤 Review & Approval** → Developer reviews generated requirements
-4. **Sprint Planning** → SprintAgent & DependencyAgent create sprint
-5. **👤 Sprint Sign-off** → Developer approves sprint goals
-6. **Documentation** → DocAgent generates docs
-7. **Work Item Creation** → DevOpsAgent creates tickets
-8. **Synchronization** → SyncAgent syncs to Execution
+1. **👤 Developer Prompt**: `@planning create feature X`
+2. **Chat Response**: PlanAgent shows generated plan
+3. **👤 Decision Prompt**: `approve with modifications: [changes]`
+4. **Sprint Creation**: SprintAgent creates sprint
+5. **👤 Confirmation**: `start sprint`
+6. **Background**: GitAgent commits, SyncAgent syncs
 
 ---
 
@@ -108,28 +138,28 @@ The **Planning Orchestrator** is responsible for:
 
 ## Purpose
 
-The **Execution Orchestrator** is responsible for:
-* Implementing code based on requirements from Planning
-* Running tests and code reviews
-* Managing deployments and releases
-* Providing status updates back to Planning
-* **🔵 Collaborating with developers during implementation**
+The **Execution Orchestrator** responds to implementation-related prompts:
+* Generating code from chat commands
+* Running tests on demand
+* Performing code reviews in chat
+* Deploying through chat approval
+* Showing build status in responses
 
 ## Architecture
 
 ### Implementation Agents
 
-| Agent | Purpose | Output | Human Interaction |
-|-------|---------|--------|-------------------|
-| **Conductor** | Main orchestrator for execution tasks | Task coordination | ✅ Monitors progress |
-| **ImplementAgent** | Generates code based on requirements | Source code | ✅ Reviews & modifies code |
-| **ReviewAgent** | Reviews code for quality and standards | Review reports | ✅ Addresses review comments |
-| **TestAgent** | Runs tests and generates reports | Test results | ✅ Fixes failing tests |
-| **BuildAgent** | Manages build processes | Build artifacts | ❌ Automated |
-| **DeployAgent** | Handles deployments to environments | Deployment logs | ✅ Approves production deploy |
-| **StatusAgent** | Reports progress back to Planning | Status updates | ❌ Automated |
+| Agent | Triggered By | Chat Response | Follow-up Prompts |
+|-------|--------------|---------------|-------------------|
+| **Conductor** | `@execution start task [id]` | Task breakdown | `proceed`, `modify approach` |
+| **ImplementAgent** | `implement [feature]` | Shows generated code | `accept`, `regenerate`, `modify` |
+| **ReviewAgent** | `review code` | Review comments | `fix issues`, `explain`, `ignore` |
+| **TestAgent** | `run tests` | Test results | `fix failing`, `skip`, `rerun` |
+| **BuildAgent** | `build project` | Build status | `view logs`, `retry` |
+| **DeployAgent** | `deploy to [env]` | Deployment plan | `confirm`, `cancel`, `schedule` |
+| **StatusAgent** | Background/on request | Progress updates | `show details`, `show blockers` |
 
-### Folder Structure
+### Folder Structure (Managed via prompts)
 
 ```
 /execution/
@@ -141,292 +171,216 @@ The **Execution Orchestrator** is responsible for:
 │   ├── test.agent.md
 │   ├── build.agent.md
 │   ├── deploy.agent.md
-│   ├── status.agent.md
-│   └── git.agent.md
+│   └── status.agent.md
 │
-├── workspace/               # 👤 Developer workspace
-│   ├── code/               # Generated & human-modified code
-│   ├── reviews/            # Code review comments
-│   └── fixes/              # Developer fixes
+├── workspace/          # Auto-managed based on prompts
+│   └── [generated and reviewed code]
 │
-├── plans/
-│   └── [execution plans]
-│
-└── README.md
+└── plans/             # Execution plans from chat sessions
 ```
 
-## Execution Workflow with Human Interaction
+## Execution Workflow via Prompts
 
-1. **Receive Requirements** ← from Planning Orchestrator
-2. **Task Assignment** → Conductor notifies developer
-3. **👤 Developer Decision** → Choose to auto-implement or manual
-4. **Implementation** → ImplementAgent generates initial code
-5. **👤 Code Modification** → Developer refines generated code
-6. **Code Review** → ReviewAgent analyzes code
-7. **👤 Address Reviews** → Developer fixes issues
-8. **Testing** → TestAgent runs tests
-9. **👤 Fix Tests** → Developer fixes failing tests
-10. **Building** → BuildAgent creates artifacts
-11. **👤 Deployment Approval** → Developer approves deploy
-12. **Deployment** → DeployAgent deploys
-13. **Status Update** → back to Planning
+1. **👤 Prompt**: `@execution implement login feature`
+2. **Conductor Response**: Shows implementation approach
+3. **👤 Decision**: `proceed with approach 2`
+4. **Code Generation**: ImplementAgent shows code in chat
+5. **👤 Review**: `looks good, add error handling`
+6. **Modification**: Agent updates code
+7. **👤 Approval**: `commit and create PR`
+8. **Testing**: `run tests`
+9. **👤 Fix**: `fix the failing test`
+10. **👤 Deploy**: `deploy to staging`
+11. **Confirmation**: `yes, deploy now`
 
 ---
 
 # 🔄 Inter-Orchestrator Communication
 
-## Enhanced Data Flow with Human Interaction
+## Prompt-Driven Data Flow
 
 ```mermaid
-graph TB
-    H[👤 Human Developer]
-    P[Planning Orchestrator]
-    E[Execution Orchestrator]
-    G[GitHub/DevOps]
+graph LR
+    subgraph "GitHub Copilot Chat"
+        D[👤 Developer Prompts]
+        R[Orchestrator Responses]
+    end
     
-    H -->|Ideas & Requirements| P
-    P -->|Review Request| H
-    H -->|Approval| P
+    subgraph "Background Processes"
+        P[Planning Orchestrator]
+        E[Execution Orchestrator]
+        G[GitHub/DevOps]
+    end
     
-    P -->|Requirements| G
-    G -->|Tasks| E
+    D -->|"@planning..."| P
+    D -->|"@execution..."| E
+    D -->|"@orchestra..."| P & E
     
-    E -->|Generated Code| H
-    H -->|Modified Code| E
+    P -->|Results| R
+    E -->|Results| R
     
-    E -->|Status| G
-    G -->|Updates| P
-    
-    E -->|Review Request| H
-    H -->|Fixes| E
-    
-    H -->|Deploy Approval| E
-    
-    P -->|Reports| H
-    E -->|Test Results| H
+    P -.->|Auto-sync| G
+    E -.->|Auto-sync| G
+    G -.->|Updates| P & E
 ```
 
-## Human Decision Points
+## Common Prompt Patterns
 
-### Planning Phase
-1. **Idea Submission** - Developer writes initial ideas
-2. **Requirement Validation** - Review auto-generated requirements
-3. **Priority Setting** - Assign priority to tasks
-4. **Sprint Approval** - Sign off on sprint goals
-5. **Documentation Review** - Verify technical docs
+### Planning Prompts
+```markdown
+@planning create epic for [feature]
+@planning break down [epic] into stories
+@planning estimate story points
+@planning plan next sprint
+@planning show backlog
+@planning update roadmap
+```
 
-### Execution Phase
-1. **Implementation Choice** - Auto-generate vs manual coding
-2. **Code Review** - Review generated code quality
-3. **Test Strategy** - Define test approach
-4. **Bug Fixes** - Fix failing tests
-5. **Deployment Gates** - Approve production releases
+### Execution Prompts
+```markdown
+@execution implement [story-id]
+@execution review my changes
+@execution run unit tests
+@execution fix failing tests
+@execution build project
+@execution deploy to [environment]
+```
 
-## Communication Channels
+### Cross-Orchestrator Prompts
+```markdown
+@orchestra status                    # Both respond
+@orchestra show blockers             # Both respond
+@orchestra sync planning to execution
+@orchestra generate weekly report
+```
 
-| Direction | Channel | Content | Human Role |
-|-----------|---------|---------|------------|
-| Human → Planning | Markdown files, GitHub Issues | Ideas, requirements | **Author** |
-| Planning → Human | PR notifications | Review requests | **Reviewer** |
-| Human → Execution | Code commits | Implementation | **Developer** |
-| Execution → Human | PR comments | Code review feedback | **Reviewer** |
-| Planning → Execution | GitHub Issues/PRs | Requirements, tasks | Automated |
-| Execution → Planning | GitHub Comments | Status updates | Automated |
-| Both → Human | Dashboards, Slack/Teams | Status, alerts | **Monitor** |
-
-## Synchronization Points
-
-1. **Sprint Start** 
-   - Planning pushes sprint goals to Execution
-   - **👤 Developer reviews and acknowledges sprint goals**
-
-2. **Daily Sync** 
-   - Status updates from Execution to Planning
-   - **👤 Developer reviews daily progress dashboard**
-
-3. **Code Complete**
-   - **👤 Developer marks feature as complete**
-   - Triggers review and test workflows
-
-4. **Sprint End** 
-   - Results and retrospective data exchange
-   - **👤 Developer provides retrospective feedback**
-
-5. **Release**
-   - Documentation and changelog synchronization
-   - **👤 Developer approves release notes**
+### Decision Prompts (Contextual)
+```markdown
+approve
+reject with reason: [explanation]
+modify: [specific changes]
+proceed
+cancel
+retry
+skip
+```
 
 ---
 
 # 📊 Task Structure
 
-## Standard Task Format with Owner Assignment
+## Prompt-Generated Task Format
 
-Both orchestrators use the same task format for consistency:
+Tasks are created and modified through chat prompts:
 
 ```markdown
+Developer: "@planning create task for user authentication"
+
+Copilot Response:
 ---
 id: TSK-001
-orchestrator: planning | execution
-type: requirement | implementation | test | deployment
-status: planned | in-progress | review | done | blocked
-depends_on: [TSK-000]
-assigned_to: [Agent Name | Human Developer]
-owner: [GitHub username]  # 👤 Human responsible
-priority: critical | high | medium | low
+orchestrator: planning
+type: implementation
+status: planned
+assigned_to: [Awaiting assignment]
+owner: [current-user]
+priority: [Awaiting priority]
 acceptance_criteria:
-  - Criterion 1
-  - Criterion 2
-sprint: 2025-11
-created_by: PlanningOrchestrator | Human
-executed_by: ExecutionOrchestrator | Human
-requires_human_review: true | false
-human_approval_status: pending | approved | rejected
+  - User can log in with email/password
+  - Session management implemented
+  - Password reset functionality
 ---
 
-### Description
-[Task details]
-
-### Input
-[What this task needs]
-
-### Output
-[What this task produces]
-
-### Human Actions Required
-- [ ] Review generated plan
-- [ ] Approve implementation approach
-- [ ] Review code quality
-- [ ] Sign off on completion
+Copilot: "Please review. You can:
+- `approve` - Create task as-is
+- `set priority high` - Set priority
+- `assign to @username` - Assign task
+- `add criteria: [text]` - Add acceptance criteria
+- `modify description` - Change description"
 ```
+
+---
+
+# 🎮 Prompt Command Reference
+
+## Global Commands
+- `@orchestra help` - Show available commands
+- `@orchestra status` - Show current state
+- `@orchestra config` - Show/modify configuration
+
+## Planning Commands
+- `@planning create [epic|feature|story|task]`
+- `@planning plan sprint`
+- `@planning show [backlog|sprint|roadmap]`
+- `@planning estimate [story-id]`
+- `@planning prioritize`
+
+## Execution Commands
+- `@execution implement [id]`
+- `@execution test [all|unit|integration]`
+- `@execution review`
+- `@execution build`
+- `@execution deploy [env]`
+
+## Decision Commands (Contextual)
+- `approve` / `reject`
+- `yes` / `no`
+- `proceed` / `cancel`
+- `retry` / `skip`
+- `modify: [changes]`
 
 ---
 
 # 🚀 Implementation Roadmap
 
 ## Phase 1: Foundation
-- [ ] Set up separate repositories/folders for each orchestrator
-- [ ] Define communication protocols
-- [ ] Create base templates
-- [ ] **👤 Define human interaction points**
+- [ ] Create Copilot Chat command parser
+- [ ] Set up orchestrator routing
+- [ ] Define prompt templates
+- [ ] Build response formatting
 
 ## Phase 2: Planning Orchestrator
-- [ ] Implement core planning agents
-- [ ] Set up GitHub/DevOps integration
-- [ ] Create documentation workflows
-- [ ] **👤 Build review/approval workflows**
+- [ ] Implement planning prompt handlers
+- [ ] Create chat-based approval flows
+- [ ] Build interactive sprint planning
+- [ ] Add context preservation
 
 ## Phase 3: Execution Orchestrator
-- [ ] Implement conductor and sub-agents
-- [ ] Set up build/test pipelines
-- [ ] Create deployment workflows
-- [ ] **👤 Add manual override capabilities**
+- [ ] Implement execution prompt handlers
+- [ ] Create code generation responses
+- [ ] Build test result formatting
+- [ ] Add deployment confirmations
 
 ## Phase 4: Integration
-- [ ] Establish bidirectional communication
-- [ ] Implement status synchronization
-- [ ] Test end-to-end workflows
-- [ ] **👤 Create developer dashboards**
+- [ ] Cross-orchestrator commands
+- [ ] Context switching
+- [ ] Session management
+- [ ] Progress tracking in chat
 
-## Phase 5: Optimization
-- [ ] Add DAG analysis for dependencies
-- [ ] Implement feedback loops
-- [ ] Optimize agent performance
-- [ ] **👤 Add developer productivity metrics**
-
----
-
-# 📝 Configuration Examples
-
-## Planning Orchestrator Config
-```yaml
-# Example configuration structure
-orchestrator:
-  name: planning-orchestrator
-  type: planning
-  
-human_interaction:
-  require_approval_for:
-    - sprint_planning
-    - requirement_changes
-    - documentation_updates
-  notification_channels:
-    - github_mentions
-    - email
-    - slack
-  
-github:
-  repo: your-org/project-planning
-  default_reviewers: [user1, user2]
-
-azure_devops:
-  organization: your-org
-  project: your-project
-  
-agents:
-  enabled:
-    - plan_agent
-    - requirements_agent
-    - sprint_agent
-    - doc_agent
-    - git_agent
-    - devops_agent
-    - sync_agent
-```
-
-## Execution Orchestrator Config
-```yaml
-# Example configuration structure
-orchestrator:
-  name: execution-orchestrator
-  type: execution
-  
-human_interaction:
-  code_review_required: true
-  deployment_approval:
-    staging: automatic
-    production: manual
-  auto_implement_threshold: 0.8  # Confidence level
-  
-github:
-  repo: your-org/project-code
-  protected_branches: [main, production]
-
-communication:
-  planning_repo: your-org/project-planning
-  sync_interval: 3600 # seconds
-  
-agents:
-  enabled:
-    - conductor
-    - implement_agent
-    - review_agent
-    - test_agent
-    - build_agent
-    - deploy_agent
-```
+## Phase 5: Enhancement
+- [ ] Natural language understanding
+- [ ] Prompt suggestions
+- [ ] Command autocomplete
+- [ ] Chat history analysis
 
 ---
 
 # ✅ Summary
 
-The **Copilot Orchestra** maintains clear separation between:
+The **Copilot Orchestra** is entirely **prompt-driven**:
 
-- **Planning Orchestrator** (`/planning/`) - Focuses on requirements, documentation, and project management
-- **Execution Orchestrator** (`/execution/`) - Handles implementation, testing, and deployment
-- **Human Developer** - Provides input, makes decisions, and reviews outputs at defined touchpoints
+- **Developer** initiates everything via GitHub Copilot Chat prompts
+- **Planning Orchestrator** responds to planning/documentation prompts
+- **Execution Orchestrator** responds to implementation/deployment prompts
+- **Decisions** are made through follow-up prompts in the chat
+- **No folder manipulation required** - everything happens in chat
+- **Background sync** happens automatically after prompt decisions
 
-Key Human Integration Points:
-- **Input**: Ideas, requirements, feedback
-- **Review**: Plans, code, documentation
-- **Approval**: Sprints, deployments, releases
-- **Override**: Manual intervention when needed
-- **Monitoring**: Dashboards, reports, alerts
+Key Interactions:
+- **Start**: Developer prompts in Copilot Chat
+- **Response**: Orchestrators show options in chat
+- **Decision**: Developer responds with decision prompts
+- **Execution**: Orchestrators execute and update background systems
+- **Feedback**: Results shown in chat for next prompt
 
-Both orchestrators:
-- Communicate through GitHub and Azure DevOps
-- Maintain their own agent pools and workflows
-- **Respect human decision authority at critical points**
-- Use consistent Markdown formats for interoperability
-- Support bidirectional synchronization
-- Can be deployed independently
+The entire workflow is conversational, keeping the developer in the Copilot Chat interface throughout the entire development lifecycle.
