@@ -7,7 +7,7 @@ The **Copilot Orchestra** consists of two distinct orchestrators that work toget
 - **Execution Orchestrator** - Handles implementation, code generation, and deployment
 - **Human Developer** - Initiates all actions via GitHub Copilot Chat prompts
 
-Both orchestrators are **prompt-driven** and communicate via GitHub and Azure DevOps while maintaining separate responsibilities and agent pools.
+Both orchestrators are **prompt-driven** and communicate via GitHub or Azure DevOps (select whichever platform your team uses) while maintaining separate responsibilities and agent pools.
 
 Each orchestrator is represented by a primary **orchestrator agent** that coordinates specialized sub-agents to fulfill the developer's prompts.
 
@@ -74,7 +74,7 @@ graph TB
     C[GitHub Copilot Chat]
     P[Planning Orchestrator]
     E[Execution Orchestrator]
-    G[GitHub/DevOps]
+    G[GitHub or Azure DevOps]
     
     D -->|Structured Prompt| C
     C -->|Interprets Context| C
@@ -138,13 +138,14 @@ graph TB
     
     subgraph "Planning Orchestrator"
       PO[Planning Orchestrator Agent]
+        IDA[IdeationAgent]
         PA[PlanAgent]
         RA[RequirementsAgent]
         SA[SprintAgent]
         DA[DocAgent]
         GA1[GitAgent]
         DOA[DevOpsAgent]
-        SYA[SyncAgent]
+        SYA[SyncAgent (optional)]
         DPA[DependencyAgent]
     end
     
@@ -159,47 +160,47 @@ graph TB
         GA2[GitAgent]
     end
     
-    subgraph "External Systems"
-        GH[GitHub]
-        AZ[Azure DevOps]
+    subgraph "External System"
+      EXT[GitHub or Azure DevOps]
     end
     
     %% Planning Flow (T1-T4)
     H -->|T1: Requirement Prompt| HC
     HC -->|T2: Route| PO
-    PO -->|T2: Delegate| PA
-    PA -->|T2: Structure| RA
-    RA -->|T3: Validate| DPA
-    DPA -->|T3: Check Dependencies| SA
-    SA -->|T4: Create Sprint| DOA
-    DOA -->|T4: Create Work Items| AZ
+    PO -->|T2: Start Ideation| IDA
+    IDA -->|T2: Clarifying Q&A| HC
+    IDA -->|T2: Synthesize Insights| PO
+    PO -->|T3: Delegate| PA
+    PA -->|T3: Structure| RA
+    RA -->|T4: Validate| DPA
+    DPA -->|T4: Check Dependencies| SA
+    SA -->|T5: Create Sprint| DOA
+    DOA -->|T5: Create Work Items| EXT
     
-    %% Sync Flow (T5)
-    SYA -->|T5: Sync| GH
-    SYA -->|T5: Sync| AZ
-    GA1 -->|T5: Commit| GH
+    %% Sync Flow (T6)
+    SYA -->|T6: Sync (optional)| EXT
+    GA1 -->|T6: Commit| EXT
     
-    %% Execution Flow (T6-T10)
-    AZ -->|T6: Pull Tasks| EO
-    EO -->|T7: Delegate| IA
-    IA -->|T8: Generate Code| RVA
-    RVA -->|T8: Review| HC
-    HC -->|T9: Feedback| H
-    H -->|T9: Approve/Fix| IA
-    IA -->|T10: Final Code| TA
+    %% Execution Flow (T7-T11)
+    EXT -->|T7: Pull Tasks| EO
+    EO -->|T8: Delegate| IA
+    IA -->|T9: Generate Code| RVA
+    RVA -->|T9: Review| HC
+    HC -->|T10: Feedback| H
+    H -->|T10: Approve/Fix| IA
+    IA -->|T11: Final Code| TA
     
-    %% Testing & Deployment (T11-T13)
-    TA -->|T11: Run Tests| BA
-    BA -->|T11: Build| STA
-    STA -->|T12: Status Update| AZ
-    AZ -->|T12: Update| P
-    BA -->|T13: Ready| DEA
-    DEA -->|T13: Request Approval| H
-    H -->|T13: Deploy Decision| DEA
+    %% Testing & Deployment (T12-T14)
+    TA -->|T12: Run Tests| BA
+    BA -->|T12: Build| STA
+    STA -->|T13: Status Update| EXT
+    BA -->|T14: Ready| DEA
+    DEA -->|T14: Request Approval| H
+    H -->|T14: Deploy Decision| DEA
     
-    %% Documentation (T14)
-    DA -->|T14: Generate Docs| GH
-    GA2 -->|T14: Commit Code| GH
+    %% Documentation (T15)
+    DA -->|T15: Generate Docs| EXT
+    GA2 -->|T15: Commit Code| EXT
     
     %% Status Flow (Continuous)
     STA -.->|Continuous| SYA
@@ -213,24 +214,26 @@ graph TB
     style SA fill:#B3E5FC
     style EO fill:#A5D6A7
     style IA fill:#C8E6C9
-    style GH fill:#F0F0F0
-    style AZ fill:#F0F0F0
+    style EXT fill:#F0F0F0
 ```
 
 ### Sequence Explanation
 
 | Phase | Agents Involved | Human Interaction |
 |-------|----------------|-------------------|
-| **T1-T2: Initiation** | Planning Orchestrator Agent, PlanAgent, RequirementsAgent | Developer provides detailed prompt |
-| **T3-T4: Planning** | Planning Orchestrator Agent, DependencyAgent, SprintAgent, DevOpsAgent | Review and approve plan |
-| **T5: Synchronization** | SyncAgent, GitAgent | Automated |
-| **T6-T7: Task Distribution** | Execution Orchestrator Agent | Select implementation approach |
-| **T8-T9: Implementation** | ImplementAgent, ReviewAgent | Review and modify code |
-| **T10-T11: Testing** | TestAgent, BuildAgent | Fix failing tests |
-| **T12: Status Update** | StatusAgent, SyncAgent | Monitor progress |
-| **T13: Deployment** | DeployAgent | Approve deployment |
-| **T14: Documentation** | DocAgent, GitAgent | Review documentation |
-| **Continuous** | StatusAgent, SyncAgent | Monitoring |
+| **T1: Prompt Intake** | Planning Orchestrator Agent | Developer provides problem statement |
+| **T2: Ideation Loop** | Planning Orchestrator Agent, IdeationAgent | Interactive Q&A to refine idea |
+| **T3: Plan Drafting** | PlanAgent, RequirementsAgent | Review generated outline and requirements |
+| **T4: Dependency Analysis** | DependencyAgent | Validate cross-links and flag risks |
+| **T5: Sprint Setup** | SprintAgent, DevOpsAgent | Approve sprint framing and work-item scaffolding |
+| **T6: Synchronization** | SyncAgent *(optional)*, GitAgent | Push Copilot-authored plan/status updates into external tracker |
+| **T7: Task Intake** | Execution Orchestrator Agent | Select implementation approach |
+| **T8-T11: Implementation** | ImplementAgent, ReviewAgent | Review and modify code |
+| **T12: Testing** | TestAgent, BuildAgent | Fix failing tests |
+| **T13: Status Update** | StatusAgent, SyncAgent *(optional)* | Push "done"/progress notes from chat; external tracker is source of truth |
+| **T14: Deployment** | DeployAgent | Approve deployment |
+| **T15: Documentation** | DocAgent, GitAgent | Review documentation |
+| **Continuous** | StatusAgent, SyncAgent *(optional)* | Outbound sync loop only when explicitly enabled |
 
 ---
 
@@ -267,11 +270,14 @@ The **Planning Orchestrator Agent** receives planning prompts and orchestrates s
 | Agent | Triggered By | Output | Follow-up Options |
 |-------|--------------|--------|-------------------|
 | **Planning Orchestrator Agent** | `@planning` prompts that span multiple capabilities | Coordinates sub-agents, maintains context, summarizes state | `delegate to [agent]`, `summarize status`, `explain decision path` |
+| **IdeationAgent** | Early-stage idea exploration or new product prompts | Structured questions, clarified assumptions, cohesive idea brief | `answer question`, `refine scope`, `generate variants`, `lock idea` |
 | **PlanAgent** | Detailed feature request with context | Structured plan with phases, milestones | `approve`, `add phase`, `adjust timeline`, `add constraints` |
 | **RequirementsAgent** | Requirements with acceptance criteria | Validated requirements with traceability | `add NFR`, `link to epic`, `set priority`, `add test criteria` |
 | **SprintAgent** | Sprint parameters with capacity | Sprint plan with risk assessment | `adjust capacity`, `swap stories`, `add buffer`, `approve` |
 | **DocAgent** | Documentation scope and audience | Generated documentation | `add section`, `change format`, `add examples`, `publish` |
 | **DependencyAgent** | Task list with relationships | Dependency graph with critical path | `resolve conflict`, `add dependency`, `parallelize`, `serialize` |
+
+> **SyncAgent Optional**: Use SyncAgent when changes authored in Copilot (plans, documentation, status notes) must be pushed out to GitHub Projects or Azure Boards. It does not pull updates back in—external systems remain the source of truth for status, so you can skip SyncAgent if outbound syncing is unnecessary.
 
 ### Folder Structure (Generated from prompts)
 
@@ -306,7 +312,14 @@ The **Planning Orchestrator Agent** receives planning prompts and orchestrates s
 3. **👤 Decision Prompt**: `approve with modifications: [changes]`
 4. **Sprint Creation**: SprintAgent creates sprint
 5. **👤 Confirmation**: `start sprint`
-6. **Background**: GitAgent commits, SyncAgent syncs
+6. **Background (Optional)**: GitAgent commits for traceability; enable SyncAgent only when you want Copilot-authored updates pushed into GitHub Projects or Azure Boards (status changes made directly in those systems stay there without needing a return sync).
+
+### IdeationAgent Flow
+
+- Developer kicks off exploratory work with prompts like `@planning ideate customer onboarding flow constraints: mobile-first, multilingual`
+- Planning Orchestrator routes the conversation to IdeationAgent, which asks clarifying questions until constraints, goals, and target metrics are captured
+- Once the idea brief is stable, the orchestrator summarizes outcomes and suggests transitioning to PlanAgent (`@planning plan scope from ideation summary`)
+- Developer can lock the idea, request variants, or restart the loop while IdeationAgent keeps a concise rationale for downstream agents
 
 ---
 

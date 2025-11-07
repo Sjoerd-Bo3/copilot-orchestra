@@ -11,6 +11,7 @@ The system solves a critical challenge in AI-assisted development: maintaining c
 ## Key Features
 
 - **🎭 Multi-Agent Workflow** - Execution Orchestrator Agent orchestrates specialized Planning, Implementation, and Code Review subagents, each optimized for their specific role.
+- **🧠 Upfront Ideation** - Planning Orchestrator now routes early prompts through an IdeationAgent to clarify assumptions before drafting plans.
 - **✅ TDD Enforcement** - Strict Test Driven Development: writing failing tests, seeing them fail, writing minimal code to pass, and verifying success before proceeding.
 - **🔍 Quality Gates** - Automated code review after each phase ensures standards are met before moving forward.
 - **📋 Documentation Trail** - Comprehensive plan files and phase completion records create an audit trail for reviewing all work completed.
@@ -26,6 +27,7 @@ The Orchestra system consists of four specialized agents:
 
 - `execution.orchestrator.agent.md` - Main orchestration agent that manages the complete development cycle.
     - Coordinates Planning, Implementation, and Code Review subagents.
+    - Accepts context from the Planning Orchestrator’s IdeationAgent to refine scope.
     - Generates the plan to be followed.
     - Handles user interactions and mandatory pause points.
     - Enforces the Planning → Implementation → Review → Commit cycle.
