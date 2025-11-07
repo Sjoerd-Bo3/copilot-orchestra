@@ -15,16 +15,53 @@ Both orchestrators are **prompt-driven** and communicate via GitHub and Azure De
 
 ## Developer as Prompter
 
-The developer initiates and controls everything through **GitHub Copilot Chat**:
+The developer initiates and controls everything through **GitHub Copilot Chat** using structured, specific prompts:
+
+### 📝 Effective Prompt Examples (Following Best Practices)
 
 ```markdown
-Examples of developer prompts:
-- "Create a new feature for user authentication"
-- "Plan the next sprint based on current backlog"
-- "Generate implementation for TSK-001"
-- "Review the code in the current PR"
-- "Deploy to staging environment"
-- "Show me the current sprint status"
+PLANNING PROMPTS:
+- "Create a user authentication feature with the following requirements:
+  - Support email/password and OAuth2 (Google, GitHub)
+  - Include password reset via email
+  - Session timeout after 30 minutes of inactivity
+  - Rate limiting: max 5 login attempts per 15 minutes
+  Target completion: Sprint 2025-11"
+
+- "Plan a 2-week sprint starting 2025-11-15 with focus on:
+  Priority 1: Complete authentication module
+  Priority 2: API rate limiting implementation
+  Priority 3: Bug fixes from previous sprint
+  Team capacity: 3 developers, 1 on vacation week 2"
+
+EXECUTION PROMPTS:
+- "Implement TSK-001 user login endpoint using:
+  Framework: FastAPI with Python 3.11
+  Database: PostgreSQL with SQLAlchemy ORM
+  Security: bcrypt for password hashing, JWT tokens
+  Include: Input validation, error handling, unit tests
+  Follow: REST best practices and company coding standards"
+
+- "Review the authentication module code for:
+  - Security vulnerabilities (OWASP top 10)
+  - Performance bottlenecks (response time < 200ms)
+  - Code coverage (minimum 80%)
+  - Compliance with PEP 8 and type hints"
+
+STATUS/QUERY PROMPTS:
+- "Show sprint progress with focus on:
+  - Blocked tasks and their dependencies
+  - Tasks at risk of not completing
+  - Burn-down chart for current sprint
+  - Developer workload distribution"
+```
+
+### ❌ Poor Prompt Examples (What to Avoid)
+```markdown
+BAD: "Create login feature"
+BAD: "Plan sprint"
+BAD: "Review code"
+BAD: "Show status"
 ```
 
 ## Prompt Flow
@@ -37,22 +74,158 @@ graph TB
     E[Execution Orchestrator]
     G[GitHub/DevOps]
     
-    D -->|Prompt| C
-    C -->|Interprets| C
+    D -->|Structured Prompt| C
+    C -->|Interprets Context| C
     C -->|Routes to| P
     C -->|Routes to| E
     
-    P -->|Response| C
-    E -->|Response| C
-    C -->|Display| D
+    P -->|Detailed Response| C
+    E -->|Actionable Output| C
+    C -->|Display Results| D
     
-    D -->|Decision Prompt| C
-    C -->|Execute| P
-    C -->|Execute| E
+    D -->|Follow-up Decision| C
+    C -->|Execute Action| P
+    C -->|Execute Action| E
     
     P -.->|Background Sync| G
     E -.->|Background Sync| G
 ```
+---
+
+# 🔄 Inter-Orchestrator Communication
+
+## High-Level Data Flow with Human Interaction
+
+```mermaid
+graph TB
+    H[👤 Human Developer]
+    P[Planning Orchestrator]
+    E[Execution Orchestrator]
+    G[GitHub/DevOps]
+    
+    H -->|Ideas & Requirements| P
+    P -->|Review Request| H
+    H -->|Approval| P
+    
+    P -->|Requirements| G
+    G -->|Tasks| E
+    
+    E -->|Generated Code| H
+    H -->|Modified Code| E
+    
+    E -->|Status| G
+    G -->|Updates| P
+    
+    E -->|Review Request| H
+    H -->|Fixes| E
+    
+    H -->|Deploy Approval| E
+    
+    P -->|Reports| H
+    E -->|Test Results| H
+```
+
+## Detailed Agent-Level Flow with Timeline
+
+```mermaid
+graph TB
+    subgraph "Human Layer"
+        H[👤 Developer]
+        HC[Copilot Chat]
+    end
+    
+    subgraph "Planning Orchestrator"
+        PA[PlanAgent]
+        RA[RequirementsAgent]
+        SA[SprintAgent]
+        DA[DocAgent]
+        GA1[GitAgent]
+        DOA[DevOpsAgent]
+        SYA[SyncAgent]
+        DPA[DependencyAgent]
+    end
+    
+    subgraph "Execution Orchestrator"
+        CO[Conductor]
+        IA[ImplementAgent]
+        RVA[ReviewAgent]
+        TA[TestAgent]
+        BA[BuildAgent]
+        DEA[DeployAgent]
+        STA[StatusAgent]
+        GA2[GitAgent]
+    end
+    
+    subgraph "External Systems"
+        GH[GitHub]
+        AZ[Azure DevOps]
+    end
+    
+    %% Planning Flow (T1-T4)
+    H -->|T1: Requirement Prompt| HC
+    HC -->|T2: Process| PA
+    PA -->|T2: Structure| RA
+    RA -->|T3: Validate| DPA
+    DPA -->|T3: Check Dependencies| SA
+    SA -->|T4: Create Sprint| DOA
+    DOA -->|T4: Create Work Items| AZ
+    
+    %% Sync Flow (T5)
+    SYA -->|T5: Sync| GH
+    SYA -->|T5: Sync| AZ
+    GA1 -->|T5: Commit| GH
+    
+    %% Execution Flow (T6-T10)
+    AZ -->|T6: Pull Tasks| CO
+    CO -->|T7: Assign| IA
+    IA -->|T8: Generate Code| RVA
+    RVA -->|T8: Review| HC
+    HC -->|T9: Feedback| H
+    H -->|T9: Approve/Fix| IA
+    IA -->|T10: Final Code| TA
+    
+    %% Testing & Deployment (T11-T13)
+    TA -->|T11: Run Tests| BA
+    BA -->|T11: Build| STA
+    STA -->|T12: Status Update| AZ
+    AZ -->|T12: Update| P
+    BA -->|T13: Ready| DEA
+    DEA -->|T13: Request Approval| H
+    H -->|T13: Deploy Decision| DEA
+    
+    %% Documentation (T14)
+    DA -->|T14: Generate Docs| GH
+    GA2 -->|T14: Commit Code| GH
+    
+    %% Status Flow (Continuous)
+    STA -.->|Continuous| SYA
+    SYA -.->|Continuous| DOA
+
+    style H fill:#FFE4B5
+    style HC fill:#E0E0E0
+    style PA fill:#B3E5FC
+    style RA fill:#B3E5FC
+    style SA fill:#B3E5FC
+    style CO fill:#C8E6C9
+    style IA fill:#C8E6C9
+    style GH fill:#F0F0F0
+    style AZ fill:#F0F0F0
+```
+
+### Sequence Explanation
+
+| Phase | Agents Involved | Human Interaction |
+|-------|----------------|-------------------|
+| **T1-T2: Initiation** | PlanAgent, RequirementsAgent | Developer provides detailed prompt |
+| **T3-T4: Planning** | DependencyAgent, SprintAgent, DevOpsAgent | Review and approve plan |
+| **T5: Synchronization** | SyncAgent, GitAgent | Automated |
+| **T6-T7: Task Distribution** | Conductor | Select implementation approach |
+| **T8-T9: Implementation** | ImplementAgent, ReviewAgent | Review and modify code |
+| **T10-T11: Testing** | TestAgent, BuildAgent | Fix failing tests |
+| **T12: Status Update** | StatusAgent, SyncAgent | Monitor progress |
+| **T13: Deployment** | DeployAgent | Approve deployment |
+| **T14: Documentation** | DocAgent, GitAgent | Review documentation |
+| **Continuous** | StatusAgent, SyncAgent | Monitoring |
 
 ---
 
@@ -62,13 +235,12 @@ graph TB
 
 | Command Type | Example Prompt | Orchestrator | Response |
 |--------------|----------------|--------------|----------|
-| **Planning** | `@planning create user story for login feature` | Planning | Generates user story, asks for approval |
-| **Sprint** | `@planning start new sprint` | Planning | Shows proposed sprint, asks for confirmation |
-| **Implement** | `@execution implement TSK-001` | Execution | Generates code, shows in chat |
-| **Review** | `@execution review current changes` | Execution | Shows review comments |
-| **Deploy** | `@execution deploy to staging` | Execution | Asks for confirmation, then deploys |
-| **Status** | `@orchestra show sprint progress` | Both | Shows dashboard in chat |
-| **Decision** | `approve` / `reject` / `modify` | Current context | Executes decision |
+| **Planning** | `@planning Create a REST API user story for customer profile management with CRUD operations, pagination (limit 50), sorting by name/date, filtering by status (active/inactive), response time < 500ms, using PostgreSQL database` | Planning | Detailed user story with acceptance criteria, estimates, and technical requirements |
+| **Sprint** | `@planning Start sprint 2025-11-15 for 2 weeks with team velocity 40 points, holidays on Nov 28-29, focus on authentication and API gateway, exclude UI tasks` | Planning | Sprint plan with capacity planning, risk assessment, and task distribution |
+| **Implement** | `@execution Implement TSK-001 login endpoint: POST /api/v1/auth/login, accept email/password JSON, return JWT token (expires 24h) and refresh token (expires 7d), include rate limiting headers, follow OpenAPI 3.0 spec` | Execution | Generated code with tests, error handling, and documentation |
+| **Review** | `@execution Review PR #234 for security issues (focus on SQL injection, XSS), verify JWT implementation follows RFC 7519, check test coverage > 80%, validate error messages don't leak sensitive info` | Execution | Detailed review with specific issues, suggestions, and security findings |
+| **Deploy** | `@execution Deploy feature/auth-module to staging after validating: all tests pass, no critical security alerts, database migrations reviewed, rollback plan documented, notify #dev-team channel` | Execution | Deployment checklist, validation results, and confirmation request |
+| **Status** | `@orchestra Show sprint burndown with: story points completed vs remaining, blocked items with reasons, at-risk items for sprint goal, individual developer velocity, compare with last 3 sprints average` | Both | Comprehensive dashboard with trends, alerts, and recommendations |
 
 ---
 
@@ -76,27 +248,24 @@ graph TB
 
 ## Purpose
 
-The **Planning Orchestrator** responds to planning-related prompts:
-* Converting prompts into structured requirements
-* Creating project plans from chat conversations
-* Managing sprints through chat commands
-* Generating documentation from discussions
-* Maintaining project state in Markdown
+The **Planning Orchestrator** responds to detailed planning-related prompts:
+* Converting structured requirements into actionable plans
+* Creating project roadmaps with clear milestones
+* Managing sprints with capacity planning
+* Generating comprehensive documentation
+* Maintaining traceable requirements in Markdown
 
 ## Architecture
 
 ### Planning Agents
 
-| Agent | Triggered By | Chat Response | Follow-up Prompts |
-|-------|--------------|---------------|-------------------|
-| **PlanAgent** | `create plan for [feature]` | Shows generated plan | `approve`, `modify`, `add details` |
-| **RequirementsAgent** | `define requirements for [feature]` | Lists requirements | `add acceptance criteria`, `prioritize` |
-| **SprintAgent** | `plan sprint`, `close sprint` | Sprint overview | `add task`, `remove task`, `start sprint` |
-| **DocAgent** | `generate docs`, `update readme` | Shows documentation | `approve`, `edit section`, `regenerate` |
-| **GitAgent** | Automatic on approval | Commit confirmation | N/A - automated |
-| **DevOpsAgent** | `create work items` | Shows created items | `assign to [user]`, `set priority` |
-| **SyncAgent** | Background process | Sync status | N/A - automated |
-| **DependencyAgent** | `analyze dependencies` | Dependency graph | `resolve conflict`, `reorder tasks` |
+| Agent | Triggered By | Output | Follow-up Options |
+|-------|--------------|--------|-------------------|
+| **PlanAgent** | Detailed feature request with context | Structured plan with phases, milestones | `approve`, `add phase`, `adjust timeline`, `add constraints` |
+| **RequirementsAgent** | Requirements with acceptance criteria | Validated requirements with traceability | `add NFR`, `link to epic`, `set priority`, `add test criteria` |
+| **SprintAgent** | Sprint parameters with capacity | Sprint plan with risk assessment | `adjust capacity`, `swap stories`, `add buffer`, `approve` |
+| **DocAgent** | Documentation scope and audience | Generated documentation | `add section`, `change format`, `add examples`, `publish` |
+| **DependencyAgent** | Task list with relationships | Dependency graph with critical path | `resolve conflict`, `add dependency`, `parallelize`, `serialize` |
 
 ### Folder Structure (Generated from prompts)
 
