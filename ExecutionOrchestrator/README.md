@@ -10,7 +10,7 @@ The system solves a critical challenge in AI-assisted development: maintaining c
 
 ## Key Features
 
-- **🎭 Multi-Agent Workflow** - Conductor agent orchestrates specialized Planning, Implementation, and Code Review subagents, each optimized for their specific role.
+- **🎭 Multi-Agent Workflow** - Execution Orchestrator Agent orchestrates specialized Planning, Implementation, and Code Review subagents, each optimized for their specific role.
 - **✅ TDD Enforcement** - Strict Test Driven Development: writing failing tests, seeing them fail, writing minimal code to pass, and verifying success before proceeding.
 - **🔍 Quality Gates** - Automated code review after each phase ensures standards are met before moving forward.
 - **📋 Documentation Trail** - Comprehensive plan files and phase completion records create an audit trail for reviewing all work completed.
@@ -22,33 +22,37 @@ The system solves a critical challenge in AI-assisted development: maintaining c
 
 The Orchestra system consists of four specialized agents:
 
-### Conductor Agent
-- `Conductor.agent.md` - Main orchestration agent that manages the complete development cycle.
+### Execution Orchestrator Agent
+
+- `execution.orchestrator.agent.md` - Main orchestration agent that manages the complete development cycle.
     - Coordinates Planning, Implementation, and Code Review subagents.
     - Generates the plan to be followed.
     - Handles user interactions and mandatory pause points.
     - Enforces the Planning → Implementation → Review → Commit cycle.
     - Uses Claude Sonnet 4.5 by default.
 
-### Planning Subagent
-- **`planning-subagent.agent.md`** - Research and context gathering specialist.
+### Execution Discovery Subagent
+
+- **`execution.discovery.subagent.agent.md`** - Research and context gathering specialist.
     - Analyzes codebase structure and patterns.
     - Identifies relevant files and functions.
     - Returns structured findings to inform plan creation.
     - Uses Claude Sonnet 4.5 by default.
 
-### Implementation Subagent
-- **`implement-subagent.agent.md`** - Implementation specialist following TDD conventions.
+### Execution Implementation Subagent
+
+- **`execution.implement.subagent.agent.md`** - Implementation specialist following TDD conventions.
     - Executes individual phases of the development plan.
     - Writes failing tests first, then minimal code to pass.
     - Works autonomously within phase boundaries.
     - Uses Claude Haiku 4.5 by default for premium request efficiency.
 
-### Code Review Subagent
-- **`code-review-subagent.agent.md`** - Quality assurance specialist.
+### Execution Review Subagent
+
+- **`execution.review.subagent.agent.md`** - Quality assurance specialist.
     - Reviews uncommitted code changes using git to identify new code.
     - Validates test coverage and code quality.
-    - Returns review results back to Conductor (`APPROVED/NEEDS_REVISION/FAILED`).
+    - Returns review results back to Execution Orchestrator (`APPROVED/NEEDS_REVISION/FAILED`).
     - Uses Claude Sonnet 4.5 by default.
 
 ## Prerequisites
@@ -94,11 +98,11 @@ The GitHub Copilot Orchestra uses custom chat modes in VSCode Insiders to enable
     code-insiders .
     ```
 
-2. **Locate Agent Files** - The repository includes four `.agent.md` files in the root directory:
-    - `Conductor.agent.md`
-    - `planning-subagent.agent.md`
-    - `implement-subagent.agent.md`
-    - `code-review-subagent.agent.md`
+2. **Locate Agent Files** - The repository includes four `.agent.md` files in the `.github/agents` directory:
+    - `execution.orchestrator.agent.md`
+    - `execution.discovery.subagent.agent.md`
+    - `execution.implement.subagent.agent.md`
+    - `execution.review.subagent.agent.md`
 
 3. **Install the agent files**
     - **Copy the `.agent.md` files to your project's root directory**
@@ -115,14 +119,14 @@ The GitHub Copilot Orchestra uses custom chat modes in VSCode Insiders to enable
             - Click "Create new custom agent" in the command dropdown at the top of VSCode.
             - Select "User Data"
             - Type the name of the file you're setting up. i.e.:
-                - Conductor
-                - planning-subagent
-                - implement-subagent
-                - code-review-subagent
+                - Execution Orchestrator
+                - execution.discovery.subagent
+                - execution.implement.subagent
+                - execution.review.subagent
             - Copy and paste the context of the agent file from this repo into the file that opens in VSCode.
 
 4. Create the Plans Directory
-    - The Conductor agent generates documentation files to track progress. Create the `plans/` directory (or the Conductor will make it when it writes out the first plan file):
+    - The Execution Orchestrator Agent generates documentation files to track progress. Create the `plans/` directory (or the Execution Orchestrator will make it when it writes out the first plan file):
 
         ```bash
         mkdir plans
@@ -134,89 +138,89 @@ The GitHub Copilot Orchestra uses custom chat modes in VSCode Insiders to enable
 
 **No Additional Configuration Required** - The agents will appear in the GitHub Copilot Chat interface automatically.
 
-## Using the Conductor Agent
+## Using the Execution Orchestrator Agent
 
-Once setup is complete, you can start using the Conductor agent:
+Once setup is complete, you can start using the Execution Orchestrator Agent:
 
 **Via Chat Mode Dropdown**:
 - Open GitHub Copilot Chat
 - Click the agent dropdown at the bottom of the chat panel
-- Select "Conductor" from the list of available modes
+- Select "Execution Orchestrator" from the list of available modes
 
 ## How It Works
 
-The Conductor agent follows a strict four-stage cycle for every development task:
+The Execution Orchestrator Agent follows a strict four-stage cycle for every development task:
 
 ### 1. Planning Phase
 - **User Request** - You describe what you want to build or change.
-- **Delegates Research** - `Conductor` invokes the `planning-subagent` to gather comprehensive context about your codebase.
-- **Plan Creation** - `Conductor` drafts a multi-phase plan (typically 3-10 phases) with specific objectives, files to modify, and tests to write.
-- **Plan Approval** - `Conductor` stops, allowing you review and approve the plan before any implementation begins.
+- **Delegates Research** - `Execution Orchestrator` invokes the `execution.discovery.subagent` to gather comprehensive context about your codebase.
+- **Plan Creation** - `Execution Orchestrator` drafts a multi-phase plan (typically 3-10 phases) with specific objectives, files to modify, and tests to write.
+- **Plan Approval** - `Execution Orchestrator` stops, allowing you review and approve the plan before any implementation begins.
 - **Plan Documentation** - Approved plan is saved to `plans/<task-name>-plan.md`.
 
 ### 2. Implementation Phase (repeated per plan phase)
-- **Delegates Implementation** - `Conductor` invokes the `implement-subagent` with the specific phase objective and requirements.
-- **TDD Execution** - `implement-subagent` follows strict Test-Driven Development:
+- **Delegates Implementation** - `Execution Orchestrator` invokes the `execution.implement.subagent` with the specific phase objective and requirements.
+- **TDD Execution** - `execution.implement.subagent` follows strict Test-Driven Development:
     - Writes failing tests first.
     - Run tests to confirm they fail.
     - Writes minimal code to make the tests pass.
     - Run tests to verify they pass.
     - Apply linting and formatting.
-- **Phase Summary** - `implement-subagent` reports completion back to the `Conductor`.
+- **Phase Summary** - `execution.implement.subagent` reports completion back to the `Execution Orchestrator`.
 
 ### 3. Review Phase (repeated per plan phase)
-- **Quality Check** - `Conductor` invokes the `code-review-subagent` to validate the implementation.
-- **Review Analysis** - `code-review-subagent` examines:
+- **Quality Check** - `Execution Orchestrator` invokes the `execution.review.subagent` to validate the implementation.
+- **Review Analysis** - `execution.review.subagent` examines:
     - Test coverage and correctness.
     - Code quality and best practices.
     - Adherence to phase objectives.
 - **Status Decision**:
-    - Returns to `Conductor` with:
+    - Returns to `Execution Orchestrator` with:
         - `APPROVED` - Proceed to commit step.
         - `NEEDS_REVISION` - Return to implementation with specific feedback.
         - `FAILED` - Stop and consult user for guidance.
 
 ### 4. Commit Phase (repeated per plan phase)
-- **Phase Summary** - `Conductor` presents what was accomplished, to the user.
+- **Phase Summary** - `Execution Orchestrator` presents what was accomplished, to the user.
 - **Documentation** - Phase completion file is saved to `plans/<task-name>-phase-<N>-complete.md`.
-- **Commit Message** - `Conductor` generates a properly formatted git commit message.
+- **Commit Message** - `Execution Orchestrator` generates a properly formatted git commit message.
 - **MANDATORY STOP** - User makes the git commit and confirm readiness to continue.
 
-**The Implement -> Review -> Commit cycle repeats** for each phase until the entire plan is complete, then the `Conductor` generates a final plan completion report.
+**The Implement -> Review -> Commit cycle repeats** for each phase until the entire plan is complete, then the `Execution Orchestrator` generates a final plan completion report.
 
 ### Agent Interaction Flow
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Conductor
+    participant Execution Orchestrator
     participant Planning
     participant Implement
     participant Review
 
-    User->>Conductor: Request feature/change
-    Conductor->>Planning: Gather context
-    Planning-->>Conductor: Return findings
-    Conductor->>User: Present plan
-    User-->>Conductor: Approve plan
+    User->>Execution Orchestrator: Request feature/change
+    Execution Orchestrator->>Planning: Gather context
+    Planning-->>Execution Orchestrator: Return findings
+    Execution Orchestrator->>User: Present plan
+    User-->>Execution Orchestrator: Approve plan
     
     loop For each phase
-        Conductor->>Implement: Execute phase (TDD)
-        Implement-->>Conductor: Report completion
-        Conductor->>Review: Review implementation
-        Review-->>Conductor: Return status
+        Execution Orchestrator->>Implement: Execute phase (TDD)
+        Implement-->>Execution Orchestrator: Report completion
+        Execution Orchestrator->>Review: Review implementation
+        Review-->>Execution Orchestrator: Return status
         
         alt Approved
-            Conductor->>User: Present summary & commit message
-            User-->>Conductor: Commit & continue
+            Execution Orchestrator->>User: Present summary & commit message
+            User-->>Execution Orchestrator: Commit & continue
         else Needs Revision
-            Conductor->>Implement: Revise with feedback
+            Execution Orchestrator->>Implement: Revise with feedback
         else Failed
-            Conductor->>User: Request guidance
+            Execution Orchestrator->>User: Request guidance
         end
     end
     
-    Conductor->>User: Plan complete
+    Execution Orchestrator->>User: Plan complete
 ```
 
 ## Usage Example
@@ -232,9 +236,9 @@ Users should be able to register, login, and access protected routes.
 ```
 
 **1. Planning Phase**
-- `Conductor` delegates to `planning-subagent` to analyze your Express codebase.
-- `planning-subagent` identifies existing patterns, middleware structure, and testing setup.
-- `Conductor` creates a 5-phase plan:
+- `Execution Orchestrator` delegates to `execution.discovery.subagent` to analyze your Express codebase.
+- `execution.discovery.subagent` identifies existing patterns, middleware structure, and testing setup.
+- `Execution Orchestrator` creates a 5-phase plan:
     1. User model and database schema.
     2. Registration endpoint with validation.
     3. Login endpoint with JWT generation.
@@ -242,7 +246,7 @@ Users should be able to register, login, and access protected routes.
     5. Integration and end-to-end tests.
 
 **2. You review and approve the plan**
-- The `Conductor` comes back to the user with the draft of the plan. At the bottom of the draft of the plan it may have "Open Questions". Provide answers like:
+- The `Execution Orchestrator` comes back to the user with the draft of the plan. At the bottom of the draft of the plan it may have "Open Questions". Provide answers like:
     ```
     Answers to open questions
 
@@ -251,16 +255,16 @@ Users should be able to register, login, and access protected routes.
     ```
 
 **3. Implementation -> Review -> Commit Cycle - Phase 1**
-- `Conductor` invokes `implement-subagent` for "User model and database schema".
-- `implement-subagent`:
+- `Execution Orchestrator` invokes `execution.implement.subagent` for "User model and database schema".
+- `execution.implement.subagent`:
     - Writes failing tests for User model (validation, password hashing, etc.).
     - Runs tests to see them fail.
     - Implements User model with minimal code.
     - Runs tests to verify they pass.
     - Applies linting/formatting.
-- `Conductor` invokes `code-review-subagent`.
+- `Execution Orchestrator` invokes `execution.review.subagent`.
 - `code-review-agent` returns `APPROVED`.
-- `Conductor` presents summary and commit message to user:
+- `Execution Orchestrator` presents summary and commit message to user:
     ```
     feat: Add User model with password hashing
     
@@ -269,7 +273,7 @@ Users should be able to register, login, and access protected routes.
     - Add email validation and uniqueness constraint
     - Write comprehensive User model tests
     ```
-- **You make the commit and tell `Conductor` to continue with "Proceed to next phase" in the chat.**
+- **You make the commit and tell `Execution Orchestrator` to continue with "Proceed to next phase" in the chat.**
 
 **4. Remaining Phases**
 The cycle repeats for each remaining phase:
@@ -282,7 +286,7 @@ Each phase follows: **Implementation → Review → Commit** cycle.
 
 **5. Completion**
 - All phases complete.
-- `Conductor` generates `plans/user-authentication-complete.md` with a full summary of what was accomplished.
+- `Execution Orchestrator` generates `plans/user-authentication-complete.md` with a full summary of what was accomplished.
 - Your feature is fully tested, reviewed, and committed in logical increments.
 
 ## Generated Artifacts
@@ -296,7 +300,7 @@ Created after the user approves the plan. It contains:
 - Suggestions of files and functions to create or modify.
 - Tests to write.
 - Open questions and decisions for the User to answer.
-- Useful in case the User or the `Conductor` gets interrupted. You can always refer back to this and have the `Conductor` pick up where it left off.
+- Useful in case the User or the `Execution Orchestrator` gets interrupted. You can always refer back to this and have the `Execution Orchestrator` pick up where it left off.
 
 **Example:** `plans/user-authentication-plan.md`
 
@@ -308,7 +312,7 @@ Created after each phase commit, contains:
 - Tests created/changed.
 - Review status.
 - Git commit message used.
-- If you need to pick up the implementation cycle in the middle of a plan, due to interruption, you can tell the conductor to review the completed phase documents for context on where to start implementing again.
+- If you need to pick up the implementation cycle in the middle of a plan, due to interruption, you can tell the Execution Orchestrator to review the completed phase documents for context on where to start implementing again.
 
 **Example:** `plans/user-authentication-phase-1-complete.md`
 
@@ -331,7 +335,7 @@ Created when all phases are done, contains:
 
 ## Tips and Best Practices
 
-### Working with the Conductor
+### Working with the Execution Orchestrator
 
 - **Be Specific in Requests** - Provide context about your tech stack, existing patterns, and constraints.
     - Good: "Add JWT auth to my Express API using the existing PostgreSQL database. You can use the dev database connection string in the `.env-dev` file."
@@ -355,9 +359,9 @@ Created when all phases are done, contains:
     - Minimal code keeps implementations focused.
     - Passing tests give confidence to proceed.
 
-- **Pay Attention to Reviews** - The `code-review-subagent` catches important issues
-    - If status is `NEEDS_REVISION`, the feedback is handed back to the `Conductor` to start a new `implement-subagent` to fix the issue.
-    - Use `FAILED` status as a signal to reassess approach. The `Conductor` will come back to the user and ask for input on what to do next.
+- **Pay Attention to Reviews** - The `execution.review.subagent` catches important issues
+    - If status is `NEEDS_REVISION`, the feedback is handed back to the `Execution Orchestrator` to start a new `execution.implement.subagent` to fix the issue.
+    - Use `FAILED` status as a signal to reassess approach. The `Execution Orchestrator` will come back to the user and ask for input on what to do next.
 
 - **Leverage the Documentation** - Phase completion files are valuable artifacts.
     - Review them before making commits.
@@ -366,10 +370,10 @@ Created when all phases are done, contains:
 ### Optimizing Performance
 
 - **Keep Phases Focused** - Smaller phases complete faster and with fewer iterations.
-    - If a phase seems too large, ask Conductor to break it down.
+    - If a phase seems too large, ask Execution Orchestrator to break it down.
     - Target 1-3 files modified per phase when possible.
 
-- **Provide Good Context** - Help the `planning-subagent` find relevant code
+- **Provide Good Context** - Help the `execution.discovery.subagent` find relevant code
     - Mention specific files or directories if you know them and attach them as explicit context in the AI chat.
     - Reference existing patterns to follow.
     - Call out any constraints or requirements upfront.
@@ -414,7 +418,7 @@ You can create specialized subagents for your workflow:
 
 1. **Create a new `.agent.md` file** (e.g., `database-migration-subagent.agent.md`).
 2. **Define the agent's role and instructions** using existing agents as templates.
-3. **Update Conductor** to invoke your new subagent where appropriate.
+3. **Update Execution Orchestrator** to invoke your new subagent where appropriate.
 4. **Test the integration** with a sample task.
 
 **Ideas for subagents:**
