@@ -9,6 +9,8 @@ The **Copilot Orchestra** consists of two distinct orchestrators that work toget
 
 Both orchestrators are **prompt-driven** and communicate via GitHub and Azure DevOps while maintaining separate responsibilities and agent pools.
 
+Each orchestrator is represented by a primary **orchestrator agent** that coordinates specialized sub-agents to fulfill the developer's prompts.
+
 ---
 
 # 💬 Prompt-Driven Architecture
@@ -135,6 +137,7 @@ graph TB
     end
     
     subgraph "Planning Orchestrator"
+      PO[Planning Orchestrator Agent]
         PA[PlanAgent]
         RA[RequirementsAgent]
         SA[SprintAgent]
@@ -146,7 +149,7 @@ graph TB
     end
     
     subgraph "Execution Orchestrator"
-        CO[Conductor]
+      EO[Execution Orchestrator Agent]
         IA[ImplementAgent]
         RVA[ReviewAgent]
         TA[TestAgent]
@@ -163,7 +166,8 @@ graph TB
     
     %% Planning Flow (T1-T4)
     H -->|T1: Requirement Prompt| HC
-    HC -->|T2: Process| PA
+    HC -->|T2: Route| PO
+    PO -->|T2: Delegate| PA
     PA -->|T2: Structure| RA
     RA -->|T3: Validate| DPA
     DPA -->|T3: Check Dependencies| SA
@@ -176,8 +180,8 @@ graph TB
     GA1 -->|T5: Commit| GH
     
     %% Execution Flow (T6-T10)
-    AZ -->|T6: Pull Tasks| CO
-    CO -->|T7: Assign| IA
+    AZ -->|T6: Pull Tasks| EO
+    EO -->|T7: Delegate| IA
     IA -->|T8: Generate Code| RVA
     RVA -->|T8: Review| HC
     HC -->|T9: Feedback| H
@@ -203,10 +207,11 @@ graph TB
 
     style H fill:#FFE4B5
     style HC fill:#E0E0E0
+    style PO fill:#81D4FA
     style PA fill:#B3E5FC
     style RA fill:#B3E5FC
     style SA fill:#B3E5FC
-    style CO fill:#C8E6C9
+    style EO fill:#A5D6A7
     style IA fill:#C8E6C9
     style GH fill:#F0F0F0
     style AZ fill:#F0F0F0
@@ -216,10 +221,10 @@ graph TB
 
 | Phase | Agents Involved | Human Interaction |
 |-------|----------------|-------------------|
-| **T1-T2: Initiation** | PlanAgent, RequirementsAgent | Developer provides detailed prompt |
-| **T3-T4: Planning** | DependencyAgent, SprintAgent, DevOpsAgent | Review and approve plan |
+| **T1-T2: Initiation** | Planning Orchestrator Agent, PlanAgent, RequirementsAgent | Developer provides detailed prompt |
+| **T3-T4: Planning** | Planning Orchestrator Agent, DependencyAgent, SprintAgent, DevOpsAgent | Review and approve plan |
 | **T5: Synchronization** | SyncAgent, GitAgent | Automated |
-| **T6-T7: Task Distribution** | Conductor | Select implementation approach |
+| **T6-T7: Task Distribution** | Execution Orchestrator Agent | Select implementation approach |
 | **T8-T9: Implementation** | ImplementAgent, ReviewAgent | Review and modify code |
 | **T10-T11: Testing** | TestAgent, BuildAgent | Fix failing tests |
 | **T12: Status Update** | StatusAgent, SyncAgent | Monitor progress |
@@ -248,7 +253,7 @@ graph TB
 
 ## Purpose
 
-The **Planning Orchestrator** responds to detailed planning-related prompts:
+The **Planning Orchestrator Agent** receives planning prompts and orchestrates specialized sub-agents to deliver:
 * Converting structured requirements into actionable plans
 * Creating project roadmaps with clear milestones
 * Managing sprints with capacity planning
@@ -261,6 +266,7 @@ The **Planning Orchestrator** responds to detailed planning-related prompts:
 
 | Agent | Triggered By | Output | Follow-up Options |
 |-------|--------------|--------|-------------------|
+| **Planning Orchestrator Agent** | `@planning` prompts that span multiple capabilities | Coordinates sub-agents, maintains context, summarizes state | `delegate to [agent]`, `summarize status`, `explain decision path` |
 | **PlanAgent** | Detailed feature request with context | Structured plan with phases, milestones | `approve`, `add phase`, `adjust timeline`, `add constraints` |
 | **RequirementsAgent** | Requirements with acceptance criteria | Validated requirements with traceability | `add NFR`, `link to epic`, `set priority`, `add test criteria` |
 | **SprintAgent** | Sprint parameters with capacity | Sprint plan with risk assessment | `adjust capacity`, `swap stories`, `add buffer`, `approve` |
@@ -273,6 +279,7 @@ The **Planning Orchestrator** responds to detailed planning-related prompts:
 /planning/
 │
 ├── agents/
+│   ├── planning.orchestrator.agent.md
 │   ├── plan.agent.md
 │   ├── requirements.agent.md
 │   ├── sprint.agent.md
@@ -295,7 +302,7 @@ The **Planning Orchestrator** responds to detailed planning-related prompts:
 ## Planning Workflow via Prompts
 
 1. **👤 Developer Prompt**: `@planning create feature X`
-2. **Chat Response**: PlanAgent shows generated plan
+2. **Planning Orchestrator Agent Delegation**: Routes request to PlanAgent and aggregates the generated plan
 3. **👤 Decision Prompt**: `approve with modifications: [changes]`
 4. **Sprint Creation**: SprintAgent creates sprint
 5. **👤 Confirmation**: `start sprint`
@@ -307,7 +314,7 @@ The **Planning Orchestrator** responds to detailed planning-related prompts:
 
 ## Purpose
 
-The **Execution Orchestrator** responds to implementation-related prompts:
+The **Execution Orchestrator Agent** receives execution prompts and orchestrates specialized sub-agents to deliver:
 * Generating code from chat commands
 * Running tests on demand
 * Performing code reviews in chat
@@ -316,11 +323,11 @@ The **Execution Orchestrator** responds to implementation-related prompts:
 
 ## Architecture
 
-### Implementation Agents
+### Execution Agents
 
 | Agent | Triggered By | Chat Response | Follow-up Prompts |
 |-------|--------------|---------------|-------------------|
-| **Conductor** | `@execution start task [id]` | Task breakdown | `proceed`, `modify approach` |
+| **Execution Orchestrator Agent** | `@execution` prompts that span multiple capabilities | Coordinates sub-agents, maintains execution context | `delegate to [agent]`, `summarize progress`, `adjust approach` |
 | **ImplementAgent** | `implement [feature]` | Shows generated code | `accept`, `regenerate`, `modify` |
 | **ReviewAgent** | `review code` | Review comments | `fix issues`, `explain`, `ignore` |
 | **TestAgent** | `run tests` | Test results | `fix failing`, `skip`, `rerun` |
@@ -334,7 +341,7 @@ The **Execution Orchestrator** responds to implementation-related prompts:
 /execution/
 │
 ├── agents/
-│   ├── conductor.agent.md
+│   ├── execution.orchestrator.agent.md
 │   ├── implement.agent.md
 │   ├── review.agent.md
 │   ├── test.agent.md
@@ -351,7 +358,7 @@ The **Execution Orchestrator** responds to implementation-related prompts:
 ## Execution Workflow via Prompts
 
 1. **👤 Prompt**: `@execution implement login feature`
-2. **Conductor Response**: Shows implementation approach
+2. **Execution Orchestrator Agent Response**: Shows implementation approach
 3. **👤 Decision**: `proceed with approach 2`
 4. **Code Generation**: ImplementAgent shows code in chat
 5. **👤 Review**: `looks good, add error handling`
