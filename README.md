@@ -94,31 +94,35 @@ maintaining traceability and pause points.
 ### Core Workflow
 
 1. **Intake & Alignment** – Confirm intent, gather missing facts, and decide
-   whether to launch the Ideation subagent.
-2. **Structuring** – Delegate to Plan and Requirements subagents to capture the
-   path forward, acceptance criteria, and traceability.
-3. **Scheduling** – Use the Sprint subagent when capacity and timing matter.
-4. **Documentation** – Call the Doc subagent for briefs, summaries, or release
-   notes aimed at stakeholders.
-5. **Dependencies & Sync** – Launch the Dependency subagent to map risks; opt in
-   to Sync when outbound tracker updates are needed.
+   whether to launch `Subagent.Planning.Ideation`.
+2. **Structuring** – Delegate to `Subagent.Planning.Plan` and
+   `Subagent.Planning.Requirements` to capture the path forward, acceptance
+   criteria, and traceability.
+3. **Scheduling** – Use `Subagent.Planning.Sprint` when capacity and timing
+   matter.
+4. **Documentation** – Call `Subagent.Planning.Doc` for briefs, summaries, or
+   release notes aimed at stakeholders.
+5. **Dependencies & Sync** – Launch `Subagent.Planning.Dependency` to map risks;
+   opt in to `Subagent.Planning.Sync` when outbound tracker updates are needed.
 6. **Review & Handoff** – Present consolidated findings, pause for approval, and
    prepare execution-ready context for the Execution Orchestrator.
 
 ### Subagent Reference
 
-- `planning.ideation` – Explore problem space, open questions, and assumptions.
-- `planning.plan` – Build phased plans with milestones and exit criteria.
-- `planning.requirements` – Capture functional and non-functional requirements
-   plus acceptance criteria.
-- `planning.sprint` – Map capacity, velocity, and sprint commitments.
-- `planning.doc` – Draft stakeholder-facing documentation.
-- `planning.dependency` – Record cross-team, technical, or sequencing risks with
-   owners and mitigations.
-- `planning.sync` *(optional)* – Push Copilot-authored summaries to project
-   trackers.
-- `planning.git` / `planning.devops` *(optional)* – Package artifacts or call
-   out tooling and environment needs.
+- `Subagent.Planning.Ideation` – Explore problem space, open questions, and
+   assumptions.
+- `Subagent.Planning.Plan` – Build phased plans with milestones and exit
+   criteria.
+- `Subagent.Planning.Requirements` – Capture functional and non-functional
+   requirements plus acceptance criteria.
+- `Subagent.Planning.Sprint` – Map capacity, velocity, and sprint commitments.
+- `Subagent.Planning.Doc` – Draft stakeholder-facing documentation.
+- `Subagent.Planning.Dependency` – Record cross-team, technical, or sequencing
+   risks with owners and mitigations.
+- `Subagent.Planning.Sync` *(optional)* – Push Copilot-authored summaries to
+   project trackers.
+- `Subagent.Planning.Git` / `Subagent.Planning.DevOps` *(optional)* – Package
+   artifacts or call out tooling and environment needs.
 
 ### State Tracking
 
@@ -148,21 +152,23 @@ while enforcing TDD, review, and approval gates.
 
 ### Phase Sequence
 
-1. **Discovery** – Gather context with `execution.discovery` and pause for
-   confirmation.
+1. **Discovery** – Gather context with `Subagent.Execution.Discovery` and pause
+   for confirmation.
 2. **Sync (Optional)** – Realign with stakeholders before modifying code.
-3. **Implement** – Delegate scoped work to `execution.implement`, enforcing TDD
-   and recording commands run.
-4. **Test** – Run the requested suites via `execution.test`; cycle back on
-   failures.
-5. **Build** – Use `execution.build` to package artifacts and capture warnings.
-6. **Review** – Invoke `execution.review` with the diff; act on feedback before
-   continuing.
+3. **Implement** – Delegate scoped work to `Subagent.Execution.Implement`,
+   enforcing TDD and recording commands run.
+4. **Test** – Run the requested suites via `Subagent.Execution.Test`; cycle back
+   on failures.
+5. **Build** – Use `Subagent.Execution.Build` to package artifacts and capture
+   warnings.
+6. **Review** – Invoke `Subagent.Execution.Review` with the diff; act on
+   feedback before continuing.
 7. **Deploy** – Proceed only with explicit approval; log smoke checks and
-   rollback posture via `execution.deploy`.
-8. **Status** – Summarize progress using `execution.status` before closing out.
+   rollback posture via `Subagent.Execution.Deploy`.
+8. **Status** – Summarize progress using `Subagent.Execution.Status` before
+   closing out.
 9. **Git** – Finish by delegating version-control operations to
-   `execution.git` (branch, commit message, push expectations).
+   `Subagent.Execution.Git` (branch, commit message, push expectations).
 
 ### Pause Gates
 

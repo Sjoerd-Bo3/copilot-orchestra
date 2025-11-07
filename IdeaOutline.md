@@ -139,27 +139,28 @@ graph TB
     end
     
     subgraph "Planning Orchestrator"
-      PO[Planning Orchestrator Agent]
-        IDA[IdeationAgent]
-        PA[PlanAgent]
-        RA[RequirementsAgent]
-        SA[SprintAgent]
-        DA[DocAgent]
-        GA1[GitAgent]
-        DOA[DevOpsAgent]
-        SYA[SyncAgent (optional)]
-        DPA[DependencyAgent]
+      PO[Planning Orchestrator]
+        IDA[Ideation Subagent]
+        PLA[Planning Subagent]
+        REQ[Requirements Subagent]
+        SPR[Sprint Subagent]
+        DOC[Documentation Subagent]
+        GITP[Git Subagent]
+        DEV[DevOps Subagent]
+        SYN[Sync Subagent]
+        DEP[Dependency Subagent]
     end
     
     subgraph "Execution Orchestrator"
-      EO[Execution Orchestrator Agent]
-        IA[ImplementAgent]
-        RVA[ReviewAgent]
-        TA[TestAgent]
-        BA[BuildAgent]
-        DEA[DeployAgent]
-        STA[StatusAgent]
-        GA2[GitAgent]
+      EO[Execution Orchestrator]
+        IMP[Implementation Subagent]
+        REV[Review Subagent]
+        TST[Test Subagent]
+        BLD[Build Subagent]
+        DEPLOY[Deploy Subagent]
+        STAT[Status Subagent]
+        DISC[Discovery Subagent]
+        GITE[Git Subagent]
     end
     
     subgraph "External System"
@@ -172,50 +173,63 @@ graph TB
     PO -->|T2: Start Ideation| IDA
     IDA -->|T2: Clarifying Q&A| HC
     IDA -->|T2: Synthesize Insights| PO
-    PO -->|T3: Delegate| PA
-    PA -->|T3: Structure| RA
-    RA -->|T4: Validate| DPA
-    DPA -->|T4: Check Dependencies| SA
-    SA -->|T5: Create Sprint| DOA
-    DOA -->|T5: Create Work Items| EXT
+    PO -->|T3: Delegate| PLA
+    PLA -->|T3: Structure| REQ
+    REQ -->|T4: Validate| DEP
+    DEP -->|T4: Check Dependencies| SPR
+    SPR -->|T5: Create Sprint| DEV
+    DEV -->|T5: Create Work Items| EXT
     
     %% Sync Flow (T6)
-    SYA -->|T6: Sync (optional)| EXT
-    GA1 -->|T6: Commit| EXT
+    SYN -->|T6: Sync| EXT
+    GITP -->|T6: Commit| EXT
     
     %% Execution Flow (T7-T11)
     EXT -->|T7: Pull Tasks| EO
-    EO -->|T8: Delegate| IA
-    IA -->|T9: Generate Code| RVA
-    RVA -->|T9: Review| HC
+    EO -->|T8: Delegate| IMP
+    IMP -->|T9: Generate Code| REV
+    REV -->|T9: Review| HC
     HC -->|T10: Feedback| H
-    H -->|T10: Approve/Fix| IA
-    IA -->|T11: Final Code| TA
+    H -->|T10: Approve/Fix| IMP
+    IMP -->|T11: Final Code| TST
     
     %% Testing & Deployment (T12-T14)
-    TA -->|T12: Run Tests| BA
-    BA -->|T12: Build| STA
-    STA -->|T13: Status Update| EXT
-    BA -->|T14: Ready| DEA
-    DEA -->|T14: Request Approval| H
-    H -->|T14: Deploy Decision| DEA
+    TST -->|T12: Run Tests| BLD
+    BLD -->|T12: Build| STAT
+    STAT -->|T13: Status Update| EXT
+    BLD -->|T14: Ready| DEPLOY
+    DEPLOY -->|T14: Request Approval| H
+    H -->|T14: Deploy Decision| DEPLOY
     
     %% Documentation (T15)
-    DA -->|T15: Generate Docs| EXT
-    GA2 -->|T15: Commit Code| EXT
+    DOC -->|T15: Generate Docs| EXT
+    GITE -->|T15: Commit Code| EXT
     
     %% Status Flow (Continuous)
-    STA -.->|Continuous| SYA
-    SYA -.->|Continuous| DOA
+    STAT -.->|Continuous| SYN
+    SYN -.->|Continuous| DEV
 
     style H fill:#FFE4B5
     style HC fill:#E0E0E0
     style PO fill:#81D4FA
-    style PA fill:#B3E5FC
-    style RA fill:#B3E5FC
-    style SA fill:#B3E5FC
+    style IDA fill:#B3E5FC
+    style PLA fill:#B3E5FC
+    style REQ fill:#B3E5FC
+    style SPR fill:#B3E5FC
+    style DOC fill:#B3E5FC
+    style GITP fill:#B3E5FC
+    style DEV fill:#B3E5FC
+    style SYN fill:#B3E5FC
+    style DEP fill:#B3E5FC
     style EO fill:#A5D6A7
-    style IA fill:#C8E6C9
+    style IMP fill:#C8E6C9
+    style REV fill:#C8E6C9
+    style TST fill:#C8E6C9
+    style BLD fill:#C8E6C9
+    style DEPLOY fill:#C8E6C9
+    style STAT fill:#C8E6C9
+    style DISC fill:#C8E6C9
+    style GITE fill:#C8E6C9
     style EXT fill:#F0F0F0
 ```
 
@@ -223,19 +237,19 @@ graph TB
 
 | Phase | Agents Involved | Human Interaction |
 |-------|----------------|-------------------|
-| **T1: Prompt Intake** | Planning Orchestrator Agent | Developer provides problem statement |
-| **T2: Ideation Loop** | Planning Orchestrator Agent, IdeationAgent | Interactive Q&A to refine idea |
-| **T3: Plan Drafting** | PlanAgent, RequirementsAgent | Review generated outline and requirements |
-| **T4: Dependency Analysis** | DependencyAgent | Validate cross-links and flag risks |
-| **T5: Sprint Setup** | SprintAgent, DevOpsAgent | Approve sprint framing and work-item scaffolding |
-| **T6: Synchronization** | SyncAgent *(optional)*, GitAgent | Push Copilot-authored plan/status updates into external tracker |
-| **T7: Task Intake** | Execution Orchestrator Agent | Select implementation approach |
-| **T8-T11: Implementation** | ImplementAgent, ReviewAgent | Review and modify code |
-| **T12: Testing** | TestAgent, BuildAgent | Fix failing tests |
-| **T13: Status Update** | StatusAgent, SyncAgent *(optional)* | Push "done"/progress notes from chat; external tracker is source of truth |
-| **T14: Deployment** | DeployAgent | Approve deployment |
-| **T15: Documentation** | DocAgent, GitAgent | Review documentation |
-| **Continuous** | StatusAgent, SyncAgent *(optional)* | Outbound sync loop only when explicitly enabled |
+| **T1: Prompt Intake** | Planning Orchestrator | Developer provides problem statement |
+| **T2: Ideation Loop** | Planning Orchestrator, Ideation Subagent | Interactive Q&A to refine idea |
+| **T3: Plan Drafting** | Planning Subagent, Requirements Subagent | Review generated outline and requirements |
+| **T4: Dependency Analysis** | Dependency Subagent | Validate cross-links and flag risks |
+| **T5: Sprint Setup** | Sprint Subagent, DevOps Subagent | Approve sprint framing and work-item scaffolding |
+| **T6: Synchronization** | Sync Subagent *(optional)*, Planning Git Subagent | Push Copilot-authored plan/status updates into external tracker |
+| **T7: Task Intake** | Execution Orchestrator | Select implementation approach |
+| **T8-T11: Implementation** | Implementation Subagent, Review Subagent | Review and modify code |
+| **T12: Testing** | Test Subagent, Build Subagent | Fix failing tests |
+| **T13: Status Update** | Status Subagent, Sync Subagent *(optional)* | Push "done"/progress notes from chat; external tracker is source of truth |
+| **T14: Deployment** | Deploy Subagent | Approve deployment |
+| **T15: Documentation** | Documentation Subagent, Execution Git Subagent | Review documentation |
+| **Continuous** | Status Subagent, Sync Subagent *(optional)* | Outbound sync loop only when explicitly enabled |
 
 ---
 
@@ -260,12 +274,12 @@ Select the desired agent in the GitHub Copilot Chat participant dropdown. Exampl
 
 ## Purpose
 
-The **Planning Orchestrator Agent** receives planning prompts and orchestrates specialized sub-agents to deliver:
-* Converting structured requirements into actionable plans
-* Creating project roadmaps with clear milestones
-* Managing sprints with capacity planning
-* Generating comprehensive documentation
-* Maintaining traceable requirements in Markdown
+The Planning Orchestrator (`Orchestrator.Planning.Main.agent.md`) receives planning prompts and orchestrates specialized sub-agents to deliver:
+- Converting structured requirements into actionable plans
+- Creating project roadmaps with clear milestones
+- Managing sprints with capacity planning
+- Generating comprehensive documentation
+- Maintaining traceable requirements in Markdown
 
 ## Architecture
 
@@ -273,15 +287,15 @@ The **Planning Orchestrator Agent** receives planning prompts and orchestrates s
 
 | Agent | Triggered By | Output | Follow-up Options |
 |-------|--------------|--------|-------------------|
-| **Planning Orchestrator Agent** | Developer chooses Planning Orchestrator in the chat participant menu for multi-capability work | Coordinates sub-agents, maintains context, summarizes state | `delegate to [agent]`, `summarize status`, `explain decision path` |
-| **IdeationAgent** | Delegated when developer requests exploratory ideation or new product framing | Structured questions, clarified assumptions, cohesive idea brief | `answer question`, `refine scope`, `generate variants`, `lock idea` |
-| **PlanAgent** | Delegated when developer asks for structured delivery planning | Structured plan with phases, milestones | `approve`, `add phase`, `adjust timeline`, `add constraints` |
-| **RequirementsAgent** | Delegated when acceptance criteria or requirement traceability is needed | Validated requirements with traceability | `add NFR`, `link to epic`, `set priority`, `add test criteria` |
-| **SprintAgent** | Delegated when sprint parameters and capacity planning are requested | Sprint plan with risk assessment | `adjust capacity`, `swap stories`, `add buffer`, `approve` |
-| **DocAgent** | Delegated when documentation scope or audience guidelines are provided | Generated documentation | `add section`, `change format`, `add examples`, `publish` |
-| **DependencyAgent** | Delegated when tasks include cross-team or technical dependencies | Dependency graph with critical path | `resolve conflict`, `add dependency`, `parallelize`, `serialize` |
+| **Planning Orchestrator** | Developer chooses Planning Orchestrator in the chat participant menu for multi-capability work | Coordinates sub-agents, maintains context, summarizes state | `delegate to [agent]`, `summarize status`, `explain decision path` |
+| **Ideation Subagent** | Delegated when developer requests exploratory ideation or new product framing | Structured questions, clarified assumptions, cohesive idea brief | `answer question`, `refine scope`, `generate variants`, `lock idea` |
+| **Planning Subagent** | Delegated when developer asks for structured delivery planning | Structured plan with phases, milestones | `approve`, `add phase`, `adjust timeline`, `add constraints` |
+| **Requirements Subagent** | Delegated when acceptance criteria or requirement traceability is needed | Validated requirements with traceability | `add NFR`, `link to epic`, `set priority`, `add test criteria` |
+| **Sprint Subagent** | Delegated when sprint parameters and capacity planning are requested | Sprint plan with risk assessment | `adjust capacity`, `swap stories`, `add buffer`, `approve` |
+| **Documentation Subagent** | Delegated when documentation scope or audience guidelines are provided | Generated documentation | `add section`, `change format`, `add examples`, `publish` |
+| **Dependency Subagent** | Delegated when tasks include cross-team or technical dependencies | Dependency graph with critical path | `resolve conflict`, `add dependency`, `parallelize`, `serialize` |
 
-> **SyncAgent Optional**: Use SyncAgent when changes authored in Copilot (plans, documentation, status notes) must be pushed out to GitHub Projects or Azure Boards. It does not pull updates back in—external systems remain the source of truth for status, so you can skip SyncAgent if outbound syncing is unnecessary.
+> **Sync Subagent** (`Subagent.Planning.Sync.agent.md`, optional): Use this subagent when changes authored in Copilot (plans, documentation, status notes) must be pushed out to GitHub Projects or Azure Boards. It does not pull updates back in—external systems remain the source of truth for status, so you can skip the sync subagent if outbound syncing is unnecessary.
 
 ### Folder Structure (Generated from prompts)
 
@@ -289,15 +303,15 @@ The **Planning Orchestrator Agent** receives planning prompts and orchestrates s
 /planning/
 │
 ├── agents/
-│   ├── planning.orchestrator.agent.md
-│   ├── plan.agent.md
-│   ├── requirements.agent.md
-│   ├── sprint.agent.md
-│   ├── doc.agent.md
-│   ├── git.agent.md
-│   ├── devops.agent.md
-│   ├── sync.agent.md
-│   └── dependency.agent.md
+│   ├── Orchestrator.Planning.Main.agent.md
+│   ├── Subagent.Planning.Plan.agent.md
+│   ├── Subagent.Planning.Requirements.agent.md
+│   ├── Subagent.Planning.Sprint.agent.md
+│   ├── Subagent.Planning.Doc.agent.md
+│   ├── Subagent.Planning.Git.agent.md
+│   ├── Subagent.Planning.DevOps.agent.md
+│   ├── Subagent.Planning.Sync.agent.md
+│   └── Subagent.Planning.Dependency.agent.md
 │
 ├── templates/           # Used by agents when responding to prompts
 │   └── [templates]
@@ -312,18 +326,18 @@ The **Planning Orchestrator Agent** receives planning prompts and orchestrates s
 ## Planning Workflow via Prompts
 
 1. **👤 Developer Prompt**: With the Planning Orchestrator active, request "Create feature X".
-2. **Planning Orchestrator Agent Delegation**: Routes request to PlanAgent and aggregates the generated plan
+2. **Planning Orchestrator Delegation**: Routes the request to the Planning Subagent (`Subagent.Planning.Plan.agent.md`) and aggregates the generated plan
 3. **👤 Decision Prompt**: `approve with modifications: [changes]`
-4. **Sprint Creation**: SprintAgent creates sprint
+4. **Sprint Creation**: The Sprint Subagent (`Subagent.Planning.Sprint.agent.md`) creates the sprint
 5. **👤 Confirmation**: `start sprint`
-6. **Background (Optional)**: GitAgent commits for traceability; enable SyncAgent only when you want Copilot-authored updates pushed into GitHub Projects or Azure Boards (status changes made directly in those systems stay there without needing a return sync).
+6. **Background (Optional)**: The Planning Git Subagent (`Subagent.Planning.Git.agent.md`) commits for traceability; enable the Sync Subagent only when you want Copilot-authored updates pushed into GitHub Projects or Azure Boards (status changes made directly in those systems stay there without needing a return sync).
 
-### IdeationAgent Flow
+### Ideation Subagent Flow (`Subagent.Planning.Ideation.agent.md`)
 
 - Developer kicks off exploratory work with prompts like "Ideate customer onboarding flow; constraints: mobile-first, multilingual."
-- Planning Orchestrator routes the conversation to IdeationAgent, which asks clarifying questions until constraints, goals, and target metrics are captured.
-- Once the idea brief is stable, the orchestrator summarizes outcomes and suggests transitioning to PlanAgent (for example, "Plan scope from the ideation summary.")
-- Developer can lock the idea, request variants, or restart the loop while IdeationAgent keeps a concise rationale for downstream agents.
+- The Planning Orchestrator routes the conversation to the Ideation Subagent, which asks clarifying questions until constraints, goals, and target metrics are captured.
+- Once the idea brief is stable, the orchestrator summarizes outcomes and suggests transitioning to the Planning Subagent (for example, "Plan scope from the ideation summary.")
+- Developer can lock the idea, request variants, or restart the loop while the Ideation Subagent (`Subagent.Planning.Ideation.agent.md`) keeps a concise rationale for downstream agents.
 
 ---
 
@@ -331,12 +345,12 @@ The **Planning Orchestrator Agent** receives planning prompts and orchestrates s
 
 ## Purpose
 
-The **Execution Orchestrator Agent** receives execution prompts and orchestrates specialized sub-agents to deliver:
-* Generating code from chat commands
-* Running tests on demand
-* Performing code reviews in chat
-* Deploying through chat approval
-* Showing build status in responses
+The Execution Orchestrator (`Orchestrator.Execution.Main.agent.md`) receives execution prompts and coordinates specialized sub-agents to deliver:
+- Generating code from chat commands
+- Running tests on demand
+- Performing code reviews in chat
+- Deploying through chat approval
+- Showing build status in responses
 
 ## Architecture
 
@@ -344,13 +358,15 @@ The **Execution Orchestrator Agent** receives execution prompts and orchestrates
 
 | Agent | Triggered By | Chat Response | Follow-up Prompts |
 |-------|--------------|---------------|-------------------|
-| **Execution Orchestrator Agent** | Developer selects Execution Orchestrator in the chat participant menu for multi-capability execution work | Coordinates sub-agents, maintains execution context | `delegate to [agent]`, `summarize progress`, `adjust approach` |
-| **ImplementAgent** | Delegated when developer requests implementation of a specific feature or task | Shows generated code | `accept`, `regenerate`, `modify` |
-| **ReviewAgent** | Delegated when code review or quality validation is requested | Review comments | `fix issues`, `explain`, `ignore` |
-| **TestAgent** | Delegated when the developer asks to run automated tests | Test results | `fix failing`, `skip`, `rerun` |
-| **BuildAgent** | Delegated when build or packaging feedback is needed | Build status | `view logs`, `retry` |
-| **DeployAgent** | Delegated when deployment or release coordination is requested | Deployment plan | `confirm`, `cancel`, `schedule` |
-| **StatusAgent** | Delegated or runs in background to surface progress updates | Progress updates | `show details`, `show blockers` |
+| **Execution Orchestrator** | Developer selects Execution Orchestrator in the chat participant menu for multi-capability execution work | Coordinates sub-agents, maintains execution context | `delegate to [agent]`, `summarize progress`, `adjust approach` |
+| **Implementation Subagent** | Delegated when developer requests implementation of a specific feature or task | Shows generated code | `accept`, `regenerate`, `modify` |
+| **Review Subagent** | Delegated when code review or quality validation is requested | Review comments | `fix issues`, `explain`, `ignore` |
+| **Test Subagent** | Delegated when the developer asks to run automated tests | Test results | `fix failing`, `skip`, `rerun` |
+| **Build Subagent** | Delegated when build or packaging feedback is needed | Build status | `view logs`, `retry` |
+| **Deploy Subagent** | Delegated when deployment or release coordination is requested | Deployment plan | `confirm`, `cancel`, `schedule` |
+| **Discovery Subagent** | Delegated to gather workspace context, dependency maps, or external resources | Discovery notes | `summarize`, `drill into [area]`, `fetch references` |
+| **Status Subagent** | Delegated or runs in background to surface progress updates | Progress updates | `show details`, `show blockers` |
+| **Execution Git Subagent** | Delegated for source control operations and diff summaries | Git status, branch updates | `show diff`, `commit`, `sync` |
 
 ### Folder Structure (Managed via prompts)
 
@@ -358,13 +374,15 @@ The **Execution Orchestrator Agent** receives execution prompts and orchestrates
 /execution/
 │
 ├── agents/
-│   ├── execution.orchestrator.agent.md
-│   ├── implement.agent.md
-│   ├── review.agent.md
-│   ├── test.agent.md
-│   ├── build.agent.md
-│   ├── deploy.agent.md
-│   └── status.agent.md
+│   ├── Orchestrator.Execution.Main.agent.md
+│   ├── Subagent.Execution.Implement.agent.md
+│   ├── Subagent.Execution.Review.agent.md
+│   ├── Subagent.Execution.Test.agent.md
+│   ├── Subagent.Execution.Build.agent.md
+│   ├── Subagent.Execution.Deploy.agent.md
+│   ├── Subagent.Execution.Status.agent.md
+│   ├── Subagent.Execution.Discovery.agent.md
+│   └── Subagent.Execution.Git.agent.md
 │
 ├── workspace/          # Auto-managed based on prompts
 │   └── [generated and reviewed code]
@@ -375,9 +393,9 @@ The **Execution Orchestrator Agent** receives execution prompts and orchestrates
 ## Execution Workflow via Prompts
 
 1. **👤 Prompt**: With the Execution Orchestrator active, request "Implement login feature."
-2. **Execution Orchestrator Agent Response**: Shows implementation approach
+2. **Execution Orchestrator Response**: Shows implementation approach
 3. **👤 Decision**: `proceed with approach 2`
-4. **Code Generation**: ImplementAgent shows code in chat
+4. **Code Generation**: The Implementation Subagent (`Subagent.Execution.Implement.agent.md`) shows code in chat
 5. **👤 Review**: `looks good, add error handling`
 6. **Modification**: Agent updates code
 7. **👤 Approval**: `commit and create PR`
@@ -436,7 +454,7 @@ graph LR
 - Execution Orchestrator: "Deploy to [environment]."
 
 ### Cross-Orchestrator Prompts
-- Either orchestrator: "Status update." *(Planning and Execution provide perspectives.)*
+- Either orchestrator: "Status update." *(Planning and Execution orchestrators provide their perspectives.)*
 - Either orchestrator: "Show blockers." *(Planning lists dependencies; Execution lists active impediments.)*
 - Either orchestrator: "Sync planning to execution." *(Planning summarizes; Execution confirms intake.)*
 - Either orchestrator: "Generate weekly report."

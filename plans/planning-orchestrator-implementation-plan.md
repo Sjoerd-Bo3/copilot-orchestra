@@ -6,7 +6,7 @@ Stand up the Planning Orchestrator agent suite (orchestrator + subagents) so it 
 
 ## Scope
 
-- Author `.github/agents/planning.orchestrator.agent.md` plus supporting subagents (Ideation, Plan, Requirements, Sprint, Doc, Dependency, optional Sync/Git/DevOps agents as needed).
+- Author `agents/Orchestrator.Planning.Main.agent.md` plus supporting subagents (`Subagent.Planning.Ideation`, `Subagent.Planning.Plan`, `Subagent.Planning.Requirements`, `Subagent.Planning.Sprint`, `Subagent.Planning.Doc`, `Subagent.Planning.Dependency`, optional `Subagent.Planning.Sync`/`Subagent.Planning.Git`/`Subagent.Planning.DevOps`).
 - Provide developer-facing documentation for planning workflows, prompt patterns, and outputs.
 - Ensure planning outputs (plans, requirements, sprints, documentation) can be consumed directly by the Execution Orchestrator.
 
@@ -19,8 +19,8 @@ Stand up the Planning Orchestrator agent suite (orchestrator + subagents) so it 
 
 ## Deliverables
 
-1. Planning orchestrator and subagent instruction files under `.github/agents/` with naming consistent with `IdeaOutline.md`.
-2. Updated documentation (e.g., `PlanningOrchestrator/README.md`) detailing setup, prompt usage, and generated artifacts.
+1. Planning orchestrator and subagent instruction files under `agents/` with naming consistent with `IdeaOutline.md`.
+2. Updated documentation (e.g., repo-level `README.md`) detailing setup, prompt usage, and generated artifacts.
 3. Template library (if required) for recurring planning responses (requirements, sprint plans, documentation).
 4. Validation checklist confirming execution orchestrator can ingest planning outputs without additional manual formatting.
 
@@ -52,4 +52,4 @@ Stand up the Planning Orchestrator agent suite (orchestrator + subagents) so it 
 
 1. Finalize decisions documented in `execution-alignment-plan.md` (discovery subagent retention, sync strategy, tooling defaults).
 2. Create agent instruction templates for rapid authoring.
-3. Begin drafting `planning.orchestrator.agent.md` and IdeationAgent instructions.
+3. Begin drafting `Orchestrator.Planning.Main.agent.md` and `Subagent.Planning.Ideation` instructions.

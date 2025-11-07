@@ -6,9 +6,9 @@
 
 ## Completed Work
 
-- Updated `execution.orchestrator.agent.md` to follow the eight-stage workflow.
+- Updated `Orchestrator.Execution.Main.agent.md` to follow the eight-stage workflow.
 - Added dedicated Test, Build, Deploy, and Status subagent instruction files.
-- Refined `ExecutionOrchestrator/README.md` to describe the current pipeline.
+- Replaced the legacy execution README with consolidated guidance in `README.md`.
 - Replaced `ImplementationAgents/README.md` with the new collaboration guide.
 - Rewrote `IdeaOutline.md` so it highlights the eight stages and optional Sync.
 - Added a project `.gitignore` that excludes dependency folders.
