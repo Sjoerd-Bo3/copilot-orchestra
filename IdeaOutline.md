@@ -1,193 +1,300 @@
-# 🧠 GitHub Copilot Orchestrator — Centrale Planning & Documentatiehub
+# 🧠 Copilot Orchestra — Dual Orchestrator System
 
-## 🎯 Doel
+## 🎯 Overview
 
-De **Copilot Orchestrator** beheert alle projectplanning, requirements en documentatie in Markdown, binnen GitHub.
-Deze orchestrator fungeert als de **centrale Orchestrator** die:
+The **Copilot Orchestra** consists of two distinct orchestrators that work together but remain separate:
+- **Planning Orchestrator** - Manages requirements, documentation, and project planning
+- **Execution Orchestrator** - Handles implementation, code generation, and deployment
 
-* Structuur biedt voor planningen, user stories en taken.
-* Communicatie mogelijk maakt met uitvoerende orchestrators via GitHub of Azure DevOps.
-* De workflow beschrijft in Markdown (niet in code).
-* Automatisch detecteert duplicaten en inconsistenties in requirements.
-* Bidirectionele synchronisatie ondersteunt tussen GitHub en Azure DevOps.
+Both orchestrators communicate via GitHub and Azure DevOps but maintain separate responsibilities and agent pools.
 
 ---
 
-## 🧩 Architectuur Overzicht
+# 📋 Planning Orchestrator
 
-### Hoofdonderdelen
+## Purpose
 
-| Component                  | Doel                                                                | Opmerkingen                                     |
-| -------------------------- | ------------------------------------------------------------------- | ----------------------------------------------- |
-| **Planning Orchestrator**  | Centrale hub voor requirements, sprintplanning en afhankelijkheden. | Markdown-first; beheerd door Copilot Agents.    |
-| **Execution Orchestrator** | Uitvoering van taken o.b.v. de Markdown-planning.                   | Haalt data via GitHub / Azure DevOps pipelines. |
-| **Copilot Agents**         | Automatiseren reviews, updates, en voortgang bijhouden.             | Communiceren via PR's en Issues.                |
-| **SprintAgent**            | Subagent binnen de Planning Orchestrator voor sprintbeheer.         | Genereert sprintroadmaps in Markdown.           |
-| **PlanAgent**              | Zet ideeën/notities om naar gestructureerde plannen.                | LLM + Markdown output.                          |
-| **DocAgent**               | Houdt documentatie, changelogs en roadmaps up-to-date.              | Automatische release notes.                     |
-| **GitAgent**               | Beheert commits, branches, tags en submodule-sync.                  | LibGit2Sharp / pygit2.                          |
-| **DevOps Agent**           | Aanmaken User Stories, Features, Epics, Tasks met acceptatiecriteria.| Azure DevOps Boards API.                        |
+The **Planning Orchestrator** is responsible for:
+* Gathering and structuring requirements in Markdown
+* Creating project plans and roadmaps
+* Managing sprints and dependencies
+* Synchronizing documentation with GitHub/Azure DevOps
+* Maintaining the single source of truth in Markdown format
 
----
+## Architecture
 
-## 🧩 Submodule
+### Planning Agents
 
-Alle orchestrators worden beheerd als **Git submodule** binnen de hoofdrepository van de projecten waarin ze gebruikt worden.
-Deze Repo is de Orchestrator Repo (die als submodule gebruikt gaat worden).
+| Agent | Purpose | Output |
+|-------|---------|--------|
+| **PlanAgent** | Converts ideas and notes into structured project plans | `plans/*.md` |
+| **RequirementsAgent** | Manages and structures requirements, detects duplicates | `requirements/*.md` |
+| **SprintAgent** | Plans sprints, manages sprint cycles and retrospectives | `sprints/sprint-YYYY-MM.md` |
+| **DocAgent** | Maintains documentation, changelogs, and release notes | `changelogs/*.md`, `docs/*.md` |
+| **GitAgent** | Version control, commits, branches, tags | Git operations |
+| **DevOpsAgent** | Creates User Stories, Features, Epics with acceptance criteria | Azure DevOps work items |
+| **SyncAgent** | Bidirectional sync between GitHub ↔ Azure DevOps | Synchronized data |
+| **DependencyAgent** | Analyzes dependencies and critical paths (DAG) | `dependencies.md` |
 
+### Folder Structure
 
-## ⚙️ Workflow
+```
+/PlanAgents/
+│
+├── agents/
+│   ├── plan_agent.md
+│   ├── requirements_agent.md
+│   ├── sprint_agent.md
+│   ├── doc_agent.md
+│   ├── git_agent.md
+│   ├── devops_agent.md
+│   ├── sync_agent.md
+│   └── dependency_agent.md
+│
+├── templates/
+│   ├── requirement_template.md
+│   ├── sprint_template.md
+│   ├── feature_template.md
+│   ├── epic_template.md
+│   └── user_story_template.md
+│
+└── output/
+    ├── requirements/
+    ├── plans/
+    ├── sprints/
+    ├── roadmap/
+    └── dependencies/
+```
 
-### 1. Markdown als Waarheid
+## Planning Workflow
 
-Alle requirements, sprintdoelen en afhankelijkheden worden in Markdown bijgehouden.
-Copilot Agents gebruiken deze bestanden als inputbron.
-
-### 2. Bidirectionele Synchronisatie
-
-* Bij elke wijziging in Markdown-documenten worden GitHub Actions getriggerd.
-* De Execution Orchestrator ontvangt updates via Pull Requests of commits.
-* **Statusupdates** van Execution Orchestrator worden teruggesynchroniseerd naar Planning.
-* Azure DevOps Wiki API voor documentatie sync.
-
-### 3. Sprint Planning & Evaluatie
-
-De **SprintAgent**:
-
-* Genereert nieuwe sprintplannen (`/sprints/sprint-YYYY-MM.md`).
-* Controleert afhankelijkheden in `/dependencies.md`.
-* Verifieert dat alle taken toegewezen zijn aan agents of ontwikkelaars.
-* **Evalueert sprints** na sluiting en genereert retrospectives.
-
-### 4. Requirements & Acceptatiecriteria
-
-* Automatische koppeling tussen requirements en features/issues.
-* Acceptatiecriteria voor User Stories en Tasks.
-* Detectie van duplicaten en inconsistenties.
-
-### 5. Versiebeheer & Documentatie
-
-* Automatische commit bij wijzigingen in lokale documentatie.
-* Branches en tags beheer voor releases.
-* Rollback mechanismen bij conflicten.
-* Automatisch genereren van changelogs op basis van commits.
-* Export naar PDF of Wiki formaat.
-
----
-
-## 🔗 Communicatie tussen Orchestrators
-
-| Richting             | Kanaal                | Inhoud                                    |
-| -------------------- | --------------------- | ----------------------------------------- |
-| Planning → Execution | GitHub / Azure DevOps | Nieuwe taken, updates, dependencies       |
-| Execution → Planning | GitHub / Azure DevOps | Statusrapporten, resultaten, logbestanden |
-| Cross-project        | Git Submodules        | Gedeelde dependencies tussen projecten    |
-
-* **Feedback loops** voor continue status updates.
-* **Projectstatus generatie** op basis van commitgeschiedenis.
+1. **Requirement Gathering** → PlanAgent & RequirementsAgent
+2. **Sprint Planning** → SprintAgent & DependencyAgent
+3. **Documentation** → DocAgent
+4. **Version Control** → GitAgent
+5. **Work Item Creation** → DevOpsAgent
+6. **Synchronization** → SyncAgent
 
 ---
 
-## 🧠 Taken en Dependencies
+# ⚡ Execution Orchestrator
 
-### Taakstructuur
+## Purpose
 
-* Elke taak bevat metadata in YAML-frontmatter binnen Markdown:
+The **Execution Orchestrator** is responsible for:
+* Implementing code based on requirements from Planning
+* Running tests and code reviews
+* Managing deployments and releases
+* Providing status updates back to Planning
+
+## Architecture
+
+### Implementation Agents
+
+| Agent | Purpose | Output |
+|-------|---------|--------|
+| **Conductor** | Main orchestrator for execution tasks | Task coordination |
+| **ImplementAgent** | Generates code based on requirements | Source code |
+| **CodeReviewAgent** | Reviews code for quality and standards | Review reports |
+| **TestAgent** | Runs tests and generates reports | Test results |
+| **BuildAgent** | Manages build processes | Build artifacts |
+| **DeployAgent** | Handles deployments to environments | Deployment logs |
+| **StatusAgent** | Reports progress back to Planning | Status updates |
+
+### Folder Structure
+
+```
+/ImplementationAgents/
+│
+├── agents/
+│   ├── Conductor.agent.md
+│   ├── implement-subagent.agent.md
+│   ├── code-review-subagent.agent.md
+│   ├── git-subagent.agent.md
+│   ├── planning-subagent.agent.md
+│   ├── test-subagent.agent.md
+│   ├── build-subagent.agent.md
+│   └── deploy-subagent.agent.md
+│
+├── plans/
+│   └── [execution plans]
+│
+└── README.md
+```
+
+## Execution Workflow
+
+1. **Receive Requirements** ← from Planning Orchestrator
+2. **Task Assignment** → Conductor
+3. **Implementation** → ImplementAgent
+4. **Code Review** → CodeReviewAgent
+5. **Testing** → TestAgent
+6. **Building** → BuildAgent
+7. **Deployment** → DeployAgent
+8. **Status Update** → back to Planning
+
+---
+
+# 🔄 Inter-Orchestrator Communication
+
+## Communication Channels
+
+| Direction | Channel | Content |
+|-----------|---------|---------|
+| Planning → Execution | GitHub Issues/PRs | Requirements, tasks, priorities |
+| Planning → Execution | Azure DevOps Work Items | User Stories, Features, Epics |
+| Execution → Planning | GitHub Comments | Status updates, blockers |
+| Execution → Planning | Azure DevOps Updates | Progress, completion status |
+| Bidirectional | Git Commits | Documentation, code changes |
+
+## Data Flow
+
+```mermaid
+graph LR
+    P[Planning Orchestrator] -->|Requirements| G[GitHub/DevOps]
+    G -->|Tasks| E[Execution Orchestrator]
+    E -->|Status| G
+    G -->|Updates| P
+    P -->|Documentation| G
+    E -->|Code| G
+```
+
+## Synchronization Points
+
+1. **Sprint Start** - Planning pushes sprint goals to Execution
+2. **Daily Sync** - Status updates from Execution to Planning
+3. **Sprint End** - Results and retrospective data exchange
+4. **Release** - Documentation and changelog synchronization
+
+---
+
+# 📊 Task Structure
+
+## Standard Task Format
+
+Both orchestrators use the same task format for consistency:
 
 ```markdown
 ---
 id: TSK-001
-type: user-story | feature | epic | task
-status: open | in-progress | done | blocked
+orchestrator: planning | execution
+type: requirement | implementation | test | deployment
+status: planned | in-progress | review | done | blocked
 depends_on: [TSK-000]
-assigned_to: Copilot-Agent
-priority: high | medium | low
+assigned_to: [Agent Name]
+priority: critical | high | medium | low
 acceptance_criteria:
-  - Criterium 1
-  - Criterium 2
+  - Criterion 1
+  - Criterion 2
 sprint: 2025-11
+created_by: PlanningOrchestrator
+executed_by: ExecutionOrchestrator
 ---
 
-### Beschrijving
-Implementeer visuele synchronisatie tussen planning en uitvoeringsdata.
-```
+### Description
+[Task details]
 
-### Dependency Management
+### Input
+[What this task needs]
 
-* **DAG (Directed Acyclic Graph)** analyse voor taken.
-* Identificatie van kritieke paden.
-* Detectie welke taken sequentieel vs parallel kunnen.
-* Cross-project dependencies via submodules.
-
----
-
-## 🧩 Automatisering
-
-| Agent                         | Doel                                                | Output                      |
-| ----------------------------- | --------------------------------------------------- | --------------------------- |
-| **Copilot Orchestrator Core** | Leest alle Markdown en genereert statusoverzichten. | `summary.md`                |
-| **SprintAgent**               | Plant sprints en koppelt taken.                     | `sprints/sprint-YYYY-MM.md` |
-| **PlanAgent**                 | Converteert ruwe input naar projectplannen.         | `plans/*.md`                |
-| **DocAgent**                  | Genereert documentatie en release notes.            | `changelogs/*.md`           |
-| **GitAgent**                  | Beheert versiebeheer en submodule sync.             | Commits, tags, branches     |
-| **DevOps Agent**              | Synchroniseert met Azure DevOps Boards.             | User Stories, Features      |
-| **SyncAgent**                 | Houdt GitHub ↔ Azure DevOps gesynchroniseerd.       | `PR` naar hoofdrepo         |
-| **DependencyAgent**           | Controleert afhankelijkheden en kritieke paden.     | `dependencies.md` updates   |
-
----
-
-## 🔄 Azure DevOps Integraties
-
-| Functionaliteit              | Doel                                          | API/Tool                    |
-| ---------------------------- | --------------------------------------------- | --------------------------- |
-| **Wiki Synchronisatie**      | Documentatie exporteren naar DevOps Wiki      | Azure DevOps Wiki API       |
-| **Boards Koppeling**         | User Stories, Features, Epics beheren         | Azure DevOps Boards API     |
-| **Hiërarchie Management**    | Epic → Feature → User Story → Task structuur  | Work Item Tracking API      |
-| **Sprint Management**        | Sprint planningen synchroniseren              | Iterations API              |
-
----
-
-## 📅 Roadmap
-
-| Fase       | Beschrijving                                                                 | Verwachte Output                            |
-| ---------- | ---------------------------------------------------------------------------- | ------------------------------------------- |
-| **Fase 1** | Setup van de Planning Orchestrator als Markdown repo + submodule integratie. | Werkende basisstructuur.                    |
-| **Fase 2** | Toevoegen van alle agents (Plan, Doc, Git, DevOps).                         | Complete agent suite.                       |
-| **Fase 3** | Bidirectionele sync met Execution Orchestrator via GitHub/DevOps.            | Volledig gesloten workflow met feedback.    |
-| **Fase 4** | DAG analyse en kritieke pad detectie implementeren.                          | Geoptimaliseerde taakplanning.              |
-| **Fase 5** | Cross-project dependency management via submodules.                          | Multi-project orchestratie.                 |
-| **Fase 6** | Review en optimalisatie van agents via Copilot feedbackloops.                | Continue verbetering.                       |
-
----
-
-## ✅ Samenvatting
-
-* Alles draait om **Markdown-documentatie** met Copilot Agents als intelligente assistenten.
-* **Bidirectionele synchronisatie** tussen Planning en Execution Orchestrators.
-* **Volledige Azure DevOps integratie** inclusief Wiki, Boards en hiërarchieën.
-* **Advanced dependency management** met DAG analyse en kritieke paden.
-* **Submodules** zorgen voor scheiding van verantwoordelijkheden en cross-project integratie.
-* Synchronisatie via GitHub/DevOps garandeert consistentie tussen planning en uitvoering.
-* **Automatische documentatie generatie** inclusief changelogs en release notes.
-
----
-
-## 🚀 Quick Start
-
-```bash
-# Clone de orchestrator als submodule
-git submodule add https://github.com/your-org/planning-orchestrator orchestrator
-git submodule update --init --recursive
-
-# Configuratie instellen
-cp orchestrator/config.yaml.example orchestrator/config.yaml
-# Edit config.yaml met je GitHub/Azure DevOps tokens
-
-# Eerste sprint aanmaken
-cd orchestrator
-python agents/sprint_agent.py --new-sprint 2025-11
+### Output
+[What this task produces]
 ```
 
 ---
 
-Wil je dat ik dit plan omzet naar een **README.md** structuur (met badges, secties en instructies voor setup in GitHub)? Dat maakt het direct bruikbaar als projectbasis.
+# 🚀 Implementation Roadmap
+
+## Phase 1: Foundation
+- [ ] Set up separate repositories/folders for each orchestrator
+- [ ] Define communication protocols
+- [ ] Create base templates
+
+## Phase 2: Planning Orchestrator
+- [ ] Implement core planning agents
+- [ ] Set up GitHub/DevOps integration
+- [ ] Create documentation workflows
+
+## Phase 3: Execution Orchestrator
+- [ ] Implement conductor and sub-agents
+- [ ] Set up build/test pipelines
+- [ ] Create deployment workflows
+
+## Phase 4: Integration
+- [ ] Establish bidirectional communication
+- [ ] Implement status synchronization
+- [ ] Test end-to-end workflows
+
+## Phase 5: Optimization
+- [ ] Add DAG analysis for dependencies
+- [ ] Implement feedback loops
+- [ ] Optimize agent performance
+
+---
+
+# 📝 Configuration Examples
+
+## Planning Orchestrator Config
+```yaml
+# Example configuration structure
+orchestrator:
+  name: planning-orchestrator
+  type: planning
+  
+github:
+  repo: your-org/project-planning
+
+azure_devops:
+  organization: your-org
+  project: your-project
+  
+agents:
+  enabled:
+    - plan_agent
+    - requirements_agent
+    - sprint_agent
+    - doc_agent
+    - git_agent
+    - devops_agent
+    - sync_agent
+```
+
+## Execution Orchestrator Config
+```yaml
+# Example configuration structure
+orchestrator:
+  name: execution-orchestrator
+  type: execution
+  
+github:
+  repo: your-org/project-code
+
+communication:
+  planning_repo: your-org/project-planning
+  sync_interval: 3600 # seconds
+  
+agents:
+  enabled:
+    - conductor
+    - implement_agent
+    - code_review_agent
+    - test_agent
+    - build_agent
+    - deploy_agent
+```
+
+---
+
+# ✅ Summary
+
+The **Copilot Orchestra** maintains clear separation between:
+
+- **Planning Orchestrator** (`/PlanAgents/`) - Focuses on requirements, documentation, and project management
+- **Execution Orchestrator** (`/ImplementationAgents/`) - Handles implementation, testing, and deployment
+
+Both orchestrators:
+- Communicate through GitHub and Azure DevOps
+- Maintain their own agent pools and workflows
+- Use consistent Markdown formats for interoperability
+- Support bidirectional synchronization
+- Can be deployed independently
