@@ -11,6 +11,8 @@ Both orchestrators are **prompt-driven** and communicate via GitHub or Azure Dev
 
 Each orchestrator is represented by a primary **orchestrator agent** that coordinates specialized sub-agents to fulfill the developer's prompts.
 
+> **Subagent Delegation**: In VS Code Insiders, orchestration hand-offs use context-isolated subagents. The active orchestrator can append `#runSubagent` or give a natural-language instruction (per [VS Code Copilot documentation](https://code.visualstudio.com/docs/copilot/chat/chat-sessions#_contextisolated-subagents)) to launch a subagent with its own context window.
+
 ---
 
 # 💬 Prompt-Driven Architecture
@@ -241,14 +243,16 @@ graph TB
 
 ## Copilot Chat Commands
 
+Select the desired agent in the GitHub Copilot Chat participant dropdown. Example prompts while each agent is active:
+
 | Command Type | Example Prompt | Orchestrator | Response |
 |--------------|----------------|--------------|----------|
-| **Planning** | `@planning Create a REST API user story for customer profile management with CRUD operations, pagination (limit 50), sorting by name/date, filtering by status (active/inactive), response time < 500ms, using PostgreSQL database` | Planning | Detailed user story with acceptance criteria, estimates, and technical requirements |
-| **Sprint** | `@planning Start sprint 2025-11-15 for 2 weeks with team velocity 40 points, holidays on Nov 28-29, focus on authentication and API gateway, exclude UI tasks` | Planning | Sprint plan with capacity planning, risk assessment, and task distribution |
-| **Implement** | `@execution Implement TSK-001 login endpoint: POST /api/v1/auth/login, accept email/password JSON, return JWT token (expires 24h) and refresh token (expires 7d), include rate limiting headers, follow OpenAPI 3.0 spec` | Execution | Generated code with tests, error handling, and documentation |
-| **Review** | `@execution Review PR #234 for security issues (focus on SQL injection, XSS), verify JWT implementation follows RFC 7519, check test coverage > 80%, validate error messages don't leak sensitive info` | Execution | Detailed review with specific issues, suggestions, and security findings |
-| **Deploy** | `@execution Deploy feature/auth-module to staging after validating: all tests pass, no critical security alerts, database migrations reviewed, rollback plan documented, notify #dev-team channel` | Execution | Deployment checklist, validation results, and confirmation request |
-| **Status** | `@orchestra Show sprint burndown with: story points completed vs remaining, blocked items with reasons, at-risk items for sprint goal, individual developer velocity, compare with last 3 sprints average` | Both | Comprehensive dashboard with trends, alerts, and recommendations |
+| **Planning** | "Create a REST API user story for customer profile management with CRUD operations, pagination (limit 50), sorting by name/date, filtering by status (active/inactive), response time < 500ms, using PostgreSQL database." | Planning | Detailed user story with acceptance criteria, estimates, and technical requirements |
+| **Sprint** | "Start sprint 2025-11-15 for 2 weeks with team velocity 40 points, holidays on Nov 28-29, focus on authentication and API gateway, exclude UI tasks." | Planning | Sprint plan with capacity planning, risk assessment, and task distribution |
+| **Implement** | "Implement TSK-001 login endpoint: POST /api/v1/auth/login, accept email/password JSON, return JWT token (expires 24h) and refresh token (expires 7d), include rate limiting headers, follow OpenAPI 3.0 spec." | Execution | Generated code with tests, error handling, and documentation |
+| **Review** | "Review PR #234 for security issues (focus on SQL injection, XSS), verify JWT implementation follows RFC 7519, check test coverage > 80%, validate error messages don't leak sensitive info." | Execution | Detailed review with specific issues, suggestions, and security findings |
+| **Deploy** | "Deploy feature/auth-module to staging after validating: all tests pass, no critical security alerts, database migrations reviewed, rollback plan documented, notify #dev-team channel." | Execution | Deployment checklist, validation results, and confirmation request |
+| **Status** | "Show sprint burndown with: story points completed vs remaining, blocked items with reasons, at-risk items for sprint goal, individual developer velocity, compare with last 3 sprints average." | Both | Comprehensive dashboard with trends, alerts, and recommendations |
 
 ---
 
@@ -269,13 +273,13 @@ The **Planning Orchestrator Agent** receives planning prompts and orchestrates s
 
 | Agent | Triggered By | Output | Follow-up Options |
 |-------|--------------|--------|-------------------|
-| **Planning Orchestrator Agent** | `@planning` prompts that span multiple capabilities | Coordinates sub-agents, maintains context, summarizes state | `delegate to [agent]`, `summarize status`, `explain decision path` |
-| **IdeationAgent** | Early-stage idea exploration or new product prompts | Structured questions, clarified assumptions, cohesive idea brief | `answer question`, `refine scope`, `generate variants`, `lock idea` |
-| **PlanAgent** | Detailed feature request with context | Structured plan with phases, milestones | `approve`, `add phase`, `adjust timeline`, `add constraints` |
-| **RequirementsAgent** | Requirements with acceptance criteria | Validated requirements with traceability | `add NFR`, `link to epic`, `set priority`, `add test criteria` |
-| **SprintAgent** | Sprint parameters with capacity | Sprint plan with risk assessment | `adjust capacity`, `swap stories`, `add buffer`, `approve` |
-| **DocAgent** | Documentation scope and audience | Generated documentation | `add section`, `change format`, `add examples`, `publish` |
-| **DependencyAgent** | Task list with relationships | Dependency graph with critical path | `resolve conflict`, `add dependency`, `parallelize`, `serialize` |
+| **Planning Orchestrator Agent** | Developer chooses Planning Orchestrator in the chat participant menu for multi-capability work | Coordinates sub-agents, maintains context, summarizes state | `delegate to [agent]`, `summarize status`, `explain decision path` |
+| **IdeationAgent** | Delegated when developer requests exploratory ideation or new product framing | Structured questions, clarified assumptions, cohesive idea brief | `answer question`, `refine scope`, `generate variants`, `lock idea` |
+| **PlanAgent** | Delegated when developer asks for structured delivery planning | Structured plan with phases, milestones | `approve`, `add phase`, `adjust timeline`, `add constraints` |
+| **RequirementsAgent** | Delegated when acceptance criteria or requirement traceability is needed | Validated requirements with traceability | `add NFR`, `link to epic`, `set priority`, `add test criteria` |
+| **SprintAgent** | Delegated when sprint parameters and capacity planning are requested | Sprint plan with risk assessment | `adjust capacity`, `swap stories`, `add buffer`, `approve` |
+| **DocAgent** | Delegated when documentation scope or audience guidelines are provided | Generated documentation | `add section`, `change format`, `add examples`, `publish` |
+| **DependencyAgent** | Delegated when tasks include cross-team or technical dependencies | Dependency graph with critical path | `resolve conflict`, `add dependency`, `parallelize`, `serialize` |
 
 > **SyncAgent Optional**: Use SyncAgent when changes authored in Copilot (plans, documentation, status notes) must be pushed out to GitHub Projects or Azure Boards. It does not pull updates back in—external systems remain the source of truth for status, so you can skip SyncAgent if outbound syncing is unnecessary.
 
@@ -307,7 +311,7 @@ The **Planning Orchestrator Agent** receives planning prompts and orchestrates s
 
 ## Planning Workflow via Prompts
 
-1. **👤 Developer Prompt**: `@planning create feature X`
+1. **👤 Developer Prompt**: With the Planning Orchestrator active, request "Create feature X".
 2. **Planning Orchestrator Agent Delegation**: Routes request to PlanAgent and aggregates the generated plan
 3. **👤 Decision Prompt**: `approve with modifications: [changes]`
 4. **Sprint Creation**: SprintAgent creates sprint
@@ -316,10 +320,10 @@ The **Planning Orchestrator Agent** receives planning prompts and orchestrates s
 
 ### IdeationAgent Flow
 
-- Developer kicks off exploratory work with prompts like `@planning ideate customer onboarding flow constraints: mobile-first, multilingual`
-- Planning Orchestrator routes the conversation to IdeationAgent, which asks clarifying questions until constraints, goals, and target metrics are captured
-- Once the idea brief is stable, the orchestrator summarizes outcomes and suggests transitioning to PlanAgent (`@planning plan scope from ideation summary`)
-- Developer can lock the idea, request variants, or restart the loop while IdeationAgent keeps a concise rationale for downstream agents
+- Developer kicks off exploratory work with prompts like "Ideate customer onboarding flow; constraints: mobile-first, multilingual."
+- Planning Orchestrator routes the conversation to IdeationAgent, which asks clarifying questions until constraints, goals, and target metrics are captured.
+- Once the idea brief is stable, the orchestrator summarizes outcomes and suggests transitioning to PlanAgent (for example, "Plan scope from the ideation summary.")
+- Developer can lock the idea, request variants, or restart the loop while IdeationAgent keeps a concise rationale for downstream agents.
 
 ---
 
@@ -340,13 +344,13 @@ The **Execution Orchestrator Agent** receives execution prompts and orchestrates
 
 | Agent | Triggered By | Chat Response | Follow-up Prompts |
 |-------|--------------|---------------|-------------------|
-| **Execution Orchestrator Agent** | `@execution` prompts that span multiple capabilities | Coordinates sub-agents, maintains execution context | `delegate to [agent]`, `summarize progress`, `adjust approach` |
-| **ImplementAgent** | `implement [feature]` | Shows generated code | `accept`, `regenerate`, `modify` |
-| **ReviewAgent** | `review code` | Review comments | `fix issues`, `explain`, `ignore` |
-| **TestAgent** | `run tests` | Test results | `fix failing`, `skip`, `rerun` |
-| **BuildAgent** | `build project` | Build status | `view logs`, `retry` |
-| **DeployAgent** | `deploy to [env]` | Deployment plan | `confirm`, `cancel`, `schedule` |
-| **StatusAgent** | Background/on request | Progress updates | `show details`, `show blockers` |
+| **Execution Orchestrator Agent** | Developer selects Execution Orchestrator in the chat participant menu for multi-capability execution work | Coordinates sub-agents, maintains execution context | `delegate to [agent]`, `summarize progress`, `adjust approach` |
+| **ImplementAgent** | Delegated when developer requests implementation of a specific feature or task | Shows generated code | `accept`, `regenerate`, `modify` |
+| **ReviewAgent** | Delegated when code review or quality validation is requested | Review comments | `fix issues`, `explain`, `ignore` |
+| **TestAgent** | Delegated when the developer asks to run automated tests | Test results | `fix failing`, `skip`, `rerun` |
+| **BuildAgent** | Delegated when build or packaging feedback is needed | Build status | `view logs`, `retry` |
+| **DeployAgent** | Delegated when deployment or release coordination is requested | Deployment plan | `confirm`, `cancel`, `schedule` |
+| **StatusAgent** | Delegated or runs in background to surface progress updates | Progress updates | `show details`, `show blockers` |
 
 ### Folder Structure (Managed via prompts)
 
@@ -370,16 +374,16 @@ The **Execution Orchestrator Agent** receives execution prompts and orchestrates
 
 ## Execution Workflow via Prompts
 
-1. **👤 Prompt**: `@execution implement login feature`
+1. **👤 Prompt**: With the Execution Orchestrator active, request "Implement login feature."
 2. **Execution Orchestrator Agent Response**: Shows implementation approach
 3. **👤 Decision**: `proceed with approach 2`
 4. **Code Generation**: ImplementAgent shows code in chat
 5. **👤 Review**: `looks good, add error handling`
 6. **Modification**: Agent updates code
 7. **👤 Approval**: `commit and create PR`
-8. **Testing**: `run tests`
+8. **Testing**: Ask the orchestrator to run the automated test suite.
 9. **👤 Fix**: `fix the failing test`
-10. **👤 Deploy**: `deploy to staging`
+10. **👤 Deploy**: Request deployment to staging.
 11. **Confirmation**: `yes, deploy now`
 
 ---
@@ -401,9 +405,9 @@ graph LR
         G[GitHub/DevOps]
     end
     
-    D -->|"@planning..."| P
-    D -->|"@execution..."| E
-    D -->|"@orchestra..."| P & E
+    D -->|"Planning-mode prompt"| P
+    D -->|"Execution-mode prompt"| E
+    D -->|"Dual-orchestrator prompt"| P & E
     
     P -->|Results| R
     E -->|Results| R
@@ -416,32 +420,26 @@ graph LR
 ## Common Prompt Patterns
 
 ### Planning Prompts
-```markdown
-@planning create epic for [feature]
-@planning break down [epic] into stories
-@planning estimate story points
-@planning plan next sprint
-@planning show backlog
-@planning update roadmap
-```
+- Planning Orchestrator: "Create epic for [feature]."
+- Planning Orchestrator: "Break down [epic] into stories."
+- Planning Orchestrator: "Estimate story points."
+- Planning Orchestrator: "Plan next sprint."
+- Planning Orchestrator: "Show backlog."
+- Planning Orchestrator: "Update roadmap."
 
 ### Execution Prompts
-```markdown
-@execution implement [story-id]
-@execution review my changes
-@execution run unit tests
-@execution fix failing tests
-@execution build project
-@execution deploy to [environment]
-```
+- Execution Orchestrator: "Implement [story-id]."
+- Execution Orchestrator: "Review my changes."
+- Execution Orchestrator: "Run unit tests."
+- Execution Orchestrator: "Fix failing tests."
+- Execution Orchestrator: "Build the project."
+- Execution Orchestrator: "Deploy to [environment]."
 
 ### Cross-Orchestrator Prompts
-```markdown
-@orchestra status                    # Both respond
-@orchestra show blockers             # Both respond
-@orchestra sync planning to execution
-@orchestra generate weekly report
-```
+- Either orchestrator: "Status update." *(Planning and Execution provide perspectives.)*
+- Either orchestrator: "Show blockers." *(Planning lists dependencies; Execution lists active impediments.)*
+- Either orchestrator: "Sync planning to execution." *(Planning summarizes; Execution confirms intake.)*
+- Either orchestrator: "Generate weekly report."
 
 ### Decision Prompts (Contextual)
 ```markdown
@@ -463,7 +461,7 @@ skip
 Tasks are created and modified through chat prompts:
 
 ```markdown
-Developer: "@planning create task for user authentication"
+Developer (Planning Orchestrator selected): "Create task for user authentication"
 
 Copilot Response:
 ---
@@ -483,7 +481,7 @@ acceptance_criteria:
 Copilot: "Please review. You can:
 - `approve` - Create task as-is
 - `set priority high` - Set priority
-- `assign to @username` - Assign task
+- `assign to <username>` - Assign task
 - `add criteria: [text]` - Add acceptance criteria
 - `modify description` - Change description"
 ```
@@ -493,23 +491,26 @@ Copilot: "Please review. You can:
 # 🎮 Prompt Command Reference
 
 ## Global Commands
-- `@orchestra help` - Show available commands
-- `@orchestra status` - Show current state
-- `@orchestra config` - Show/modify configuration
+
+- "Help" *(any agent)* — Ask the active agent to list supported capabilities.
+- "Status" *(any agent)* — Request the latest state summary.
+- "Show configuration" *(any agent)* — Review or adjust agent configuration values.
 
 ## Planning Commands
-- `@planning create [epic|feature|story|task]`
-- `@planning plan sprint`
-- `@planning show [backlog|sprint|roadmap]`
-- `@planning estimate [story-id]`
-- `@planning prioritize`
+
+- Planning Orchestrator: "Create [epic|feature|story|task]."
+- Planning Orchestrator: "Plan the next sprint."
+- Planning Orchestrator: "Show the [backlog|current sprint|roadmap]."
+- Planning Orchestrator: "Estimate [story-id]."
+- Planning Orchestrator: "Prioritize the backlog."
 
 ## Execution Commands
-- `@execution implement [id]`
-- `@execution test [all|unit|integration]`
-- `@execution review`
-- `@execution build`
-- `@execution deploy [env]`
+
+- Execution Orchestrator: "Implement [id]."
+- Execution Orchestrator: "Run [all/unit/integration] tests."
+- Execution Orchestrator: "Review the current changes."
+- Execution Orchestrator: "Build the project."
+- Execution Orchestrator: "Deploy to [environment]."
 
 ## Decision Commands (Contextual)
 - `approve` / `reject`
