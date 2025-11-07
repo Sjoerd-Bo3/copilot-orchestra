@@ -1,8 +1,7 @@
 ---
-description: Research context and return findings to parent agent
-argument-hint: Research goal or problem statement
+description: 'Researches task context and reports findings for the conductor.'
 tools: ['search', 'usages', 'problems', 'changes', 'testFailure', 'fetch', 'githubRepo']
-model: Claude Sonnet 4.5 (copilot)
+model: GPT-5-Codex (Preview)
 ---
 You are a PLANNING SUBAGENT called by a parent CONDUCTOR agent.
 
