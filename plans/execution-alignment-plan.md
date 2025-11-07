@@ -2,61 +2,33 @@
 
 ## Goal
 
-Bring the existing execution orchestrator agents and documentation into compliance with the expectations described in `IdeaOutline.md`.
+- Align execution agents and documentation with the dual-orchestrator outline.
 
-## Current Assets
+## Completed Work
 
-- `.github/agents/execution.orchestrator.agent.md`
-- `.github/agents/execution.discovery.subagent.agent.md`
-- `.github/agents/execution.implement.subagent.agent.md`
-- `.github/agents/execution.review.subagent.agent.md`
-- `.github/agents/execution.git.subagent.agent.md`
-- `ExecutionOrchestrator/README.md`
-- `ImplementationAgents/README.md`
+- Updated `execution.orchestrator.agent.md` to follow the eight-stage workflow.
+- Added dedicated Test, Build, Deploy, and Status subagent instruction files.
+- Refined `ExecutionOrchestrator/README.md` to describe the current pipeline.
+- Replaced `ImplementationAgents/README.md` with the new collaboration guide.
+- Rewrote `IdeaOutline.md` so it highlights the eight stages and optional Sync.
+- Added a project `.gitignore` that excludes dependency folders.
 
-## Key Requirements From IdeaOutline
+## Outstanding Work
 
-- Execution stack includes orchestrator plus Implement, Review, Test, Build, Deploy, Status subagents (Sync optional).
-- Orchestrator handles execution-focused prompts when the developer selects the Execution Orchestrator chat participant, consumes planning outputs, and keeps the developer in control via conversational checkpoints.
-- Focus on implementation execution; planning/ideation responsibilities belong to the Planning Orchestrator.
-- Optional SyncAgent only pushes Copilot-authored updates to the chosen external tracker (GitHub Projects or Azure Boards).
-- Delegation to subagents should leverage VS Code's context-isolated subagents (see [VS Code documentation](https://code.visualstudio.com/docs/copilot/chat/chat-sessions#_contextisolated-subagents)) via natural-language instructions or the `#runSubagent` tool.
+- Decide whether the Sync subagent belongs in execution or remains planning
+  owned.
+- Keep subagent docs synchronized as responsibilities evolve.
+- Socialize the expectation for frequent git commits during long-running tasks.
 
-## Gap Analysis
+## Decision Log
 
-1. **Missing Subagents**
-   - No dedicated Test, Build, Deploy, or Status subagents/instructions.
-   - Discovery subagent exists but is not referenced in IdeaOutline (needs decision).
-2. **Overlapping Responsibilities**
-   - Execution orchestrator handles discovery, plan generation, and phase documentation currently stored under `plans/`, overlapping with Planning Orchestrator duties.
-3. **Documentation Drift**
-   - `ExecutionOrchestrator/README.md` and `ImplementationAgents/README.md` describe legacy multi-phase workflow with mandatory plan files, Anthropic model defaults, and VS Code Insiders requirements that are not present in the new outline.
-4. **External Sync Assumptions**
-   - Current instructions discuss git usage but lack the optional SyncAgent guidance and outbound-only sync framing.
-
-## Decisions Required
-
-- Should the Discovery subagent be retained (possibly renamed/repositioned) or removed in favor of planning-side ideation/research?
-- What tooling defaults (models, IDE requirements) should remain documented versus moved to a separate setup guide?
-- Will we introduce a SyncAgent for execution, or rely on manual updates from planning outputs?
-
-## Proposed Remediation Tasks
-
-1. Update `ExecutionOrchestrator/README.md` to reflect the IdeaOutline architecture, agent roster, and optional SyncAgent behavior.
-2. Rewrite `.github/agents/execution.orchestrator.agent.md` instructions to remove plan-generation duties and align hand-offs with the expected subagents.
-3. Author new subagent definitions:
-   - `execution.test.agent.md`
-   - `execution.build.agent.md`
-   - `execution.deploy.agent.md`
-   - `execution.status.agent.md`
-   - (Optional) `execution.sync.agent.md`
-4. Retire or reposition the discovery subagent based on the decision above.
-5. Refresh `ImplementationAgents/README.md` (or replace it) so it mirrors the updated execution workflow and references the new agent files.
-6. Verify prompt examples and documentation references now describe selecting the Execution Orchestrator chat participant rather than relying on `@` mentions.
+- Discovery subagent stays available for context gathering but is optional.
+- Markdown linting (`npx markdownlint`) is the shared documentation quality
+  gate.
 
 ## Acceptance Criteria
 
-- Execution orchestrator and subagent instructions match naming, responsibilities, and flows in IdeaOutline.
-- Supporting README content reflects the updated architecture without conflicting legacy guidance.
-- Any optional agents (discovery, sync) have explicit justification or removal notes.
-- Developer-facing prompts and pause points align with the conversational workflow described in the outline.
+- Execution instructions, README guides, and IdeaOutline agree on the eight
+  stages and optional Sync checkpoint.
+- Subagent files align with the responsibilities documented in `IdeaOutline.md`.
+- Markdown lint passes on all touched documentation.

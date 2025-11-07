@@ -35,7 +35,6 @@ dist
 node_modules/
 jspm_packages/
 web_modules/
-mode_modules/
 
 # Cache directories
 .cache
