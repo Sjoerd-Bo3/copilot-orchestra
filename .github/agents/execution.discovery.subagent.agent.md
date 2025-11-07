@@ -1,4 +1,3 @@
-```chatagent
 ---
 description: 'Researches task context and reports findings for the Execution Orchestrator.'
 tools: ['search', 'usages', 'problems', 'changes', 'testFailure', 'fetch', 'githubRepo']
@@ -45,4 +44,3 @@ Return a structured summary with:
 - **Patterns/Conventions:** What the codebase follows
 - **Implementation Options:** 2-3 approaches if applicable
 - **Open Questions:** What remains unclear (if any)
-```

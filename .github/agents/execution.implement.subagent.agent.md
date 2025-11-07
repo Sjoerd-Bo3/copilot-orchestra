@@ -1,4 +1,3 @@
-```chatagent
 ---
 description: 'Implements orchestrator-assigned tasks using strict TDD.'
 tools: ['edit', 'search', 'runCommands', 'runTasks', 'usages', 'problems', 'changes', 'testFailure', 'fetch', 'githubRepo', 'todos']
@@ -32,4 +31,3 @@ When you've finished the implementation task:
 3. Report back so the Execution Orchestrator Agent can proceed with the next task.
 
 The orchestrator manages phase completion files and git commit messages – you focus solely on executing the implementation.
-```
