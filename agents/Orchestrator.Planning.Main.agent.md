@@ -63,11 +63,11 @@ You are the PLANNING ORCHESTRATOR AGENT. You collaborate with the developer to t
 ### 2C. Documentation
 1. Use planning.doc for stakeholder summaries, status notes, or release briefs.
 2. Save artifacts under the shared planning output tree. Default structure:
-   - `planning/output/plans/`
-   - `planning/output/requirements/`
-   - `planning/output/sprints/`
-   - `planning/output/docs/`
-   - `planning/output/decisions/`
+   - `planning/plans/`
+   - `planning/requirements/`
+   - `planning/sprints/`
+   - `planning/docs/`
+   - `planning/decisions/`
    Create missing directories before writing.
 3. Ensure documents reference relevant plan or requirement IDs for traceability.
 
