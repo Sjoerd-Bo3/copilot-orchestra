@@ -68,7 +68,7 @@ Idea → Ideation → Plan → Requirements → Sprint → Dependencies
      context tight and focused.
 
 3. **Optional workspace folders**
-   - Create `planning/output/` (with subfolders like `plans/`, `requirements/`,
+   - Create `planning/` (with subfolders like `plans/`, `requirements/`,
      `status/`) if you want artifacts saved to disk. Otherwise, keep everything
      inside chat threads.
 

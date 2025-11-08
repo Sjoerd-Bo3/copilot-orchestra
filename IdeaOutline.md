@@ -312,15 +312,13 @@ The Planning Orchestrator (`Orchestrator.Planning.Main.agent.md`) receives plann
 │   ├── Subagent.Planning.DevOps.agent.md
 │   ├── Subagent.Planning.Sync.agent.md
 │   └── Subagent.Planning.Dependency.agent.md
-│
-├── templates/           # Used by agents when responding to prompts
+├── templates/         # Used by agents when responding to prompts
 │   └── [templates]
-│
-└── output/             # Auto-generated from chat sessions
-    ├── requirements/   # Created when developer prompts for requirements
-    ├── plans/         # Created when developer prompts for plans
-    ├── sprints/       # Created when developer starts sprints
-    └── dependencies/  # Created when analyzing dependencies
+├── requirements/      # Created when developer prompts for requirements
+├── plans/             # Created when developer prompts for plans
+├── sprints/           # Created when developer starts sprints
+├── docs/              # Created when documentation is generated
+└── decisions/         # Created when logging decisions
 ```
 
 ## Planning Workflow via Prompts

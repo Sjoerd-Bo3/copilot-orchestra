@@ -29,7 +29,7 @@ Stand up the Planning Orchestrator agent suite (orchestrator + subagents) so it 
 1. **Design**
    - Confirm required subagent list and optional components (e.g., SyncAgent, GitAgent shared vs dedicated).
    - Define prompt interfaces and expected outputs for each subagent.
-   - Establish storage conventions for generated artifacts (`planning/output/...`).
+   - Establish storage conventions for generated artifacts (`planning/...`).
 2. **Author Agents**
    - Draft orchestrator instructions focusing on delegation, context management, and human-in-the-loop checkpoints.
    - Create subagent instruction files with concise role descriptions, tool permissions, and response formats.
