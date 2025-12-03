@@ -1,7 +1,7 @@
 ---
 description: 'Orchestrates execution phases across implementation, review, and git operations.'
-tools: ['edit', 'search', 'runCommands', 'runTasks', 'chromedevtools/chrome-devtools-mcp/*', 'usages', 'problems', 'changes', 'testFailure', 'fetch', 'githubRepo', 'todos', 'runSubagent']
-model: GPT-5-Codex (Preview)
+tools: ['edit', 'search', 'new', 'runCommands', 'runTasks', 'ado/*', 'chromedevtools/chrome-devtools-mcp/*', 'usages', 'problems', 'changes', 'testFailure', 'fetch', 'githubRepo', 'extensions', 'todos', 'runSubagent', 'runTests']
+model: Claude Opus 4.5 (Preview)
 handoffs:
    -  label: Collect Execution Context
       agent: Subagent.Execution.Discovery

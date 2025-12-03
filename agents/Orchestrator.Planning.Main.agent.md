@@ -1,7 +1,7 @@
 ---
 description: 'Coordinates planning prompts and delegates to planning subagents.'
-tools: ['changes', 'edit', 'problems', 'todos', 'fetch', 'githubRepo', 'runSubagent', 'runCommands']
-model: GPT-5-Codex (Preview)
+tools: ['edit', 'search', 'runCommands', 'usages', 'problems', 'changes', 'fetch', 'githubRepo', 'todos', 'runSubagent']
+model: Claude Opus 4.5 (Preview)
 handoffs:
    -  label: Explore Scope
       agent: Subagent.Planning.Ideation
