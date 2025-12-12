@@ -1,8 +1,10 @@
 ---
-description: 'Generate an implementation plan for new features or refactoring existing code.'
+description: '[DEPRECATED] Use Orchestrator.Planning.Main instead. Legacy implementation plan generator.'
 tools: ['search/codebase', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'runCommands/terminalSelection', 'runCommands/terminalLastCommand', 'openSimpleBrowser', 'fetch', 'search/searchResults', 'githubRepo', 'extensions', 'edit/editFiles', 'runNotebooks', 'search', 'new', 'runCommands', 'runTasks']
 ---
-# Implementation Plan Generation Mode
+> **⚠️ DEPRECATED**: This agent is superseded by `Orchestrator.Planning.Main` which provides integrated planning with Azure DevOps work item creation, requirements capture, and handoff to execution.
+
+# Implementation Plan Generation Mode (Legacy)
 
 ## Primary Directive
 
